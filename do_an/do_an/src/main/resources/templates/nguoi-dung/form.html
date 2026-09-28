@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Thông tin tài khoản</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('nguoi-dung')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+                <div class="row justify-content-center">
+                    <div class="col-lg-7">
+                        <div class="bg-light rounded p-4">
+                            <h6 class="mb-4"
+                                th:text="${nguoiDungForm.id == null} ? 'Thêm tài khoản' : 'Sửa tài khoản'">Tài khoản</h6>
+
+                            <form th:action="@{/nguoi-dung/luu}" th:object="${nguoiDungForm}" method="post" novalidate>
+                                <input type="hidden" th:field="*{id}">
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" th:field="*{tenDangNhap}"
+                                               th:classappend="${#fields.hasErrors('tenDangNhap')} ? 'is-invalid'"
+                                               th:readonly="${nguoiDungForm.id != null}"
+                                               placeholder="VD: thukho2">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}"></div>
+                                        <div class="form-text" th:if="${nguoiDungForm.id != null}">
+                                            Tên đăng nhập không sửa được sau khi đã tạo
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Mật khẩu
+                                            <span class="text-danger" th:if="${nguoiDungForm.id == null}">*</span>
+                                        </label>
+                                        <input type="password" class="form-control" th:field="*{matKhau}"
+                                               th:classappend="${#fields.hasErrors('matKhau')} ? 'is-invalid'"
+                                               autocomplete="new-password">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}"></div>
+                                        <div class="form-text" th:if="${nguoiDungForm.id != null}">
+                                            Để trống nếu không muốn đổi mật khẩu
+                                        </div>
+                                        <div class="form-text" th:if="${nguoiDungForm.id == null}">
+                                            Tối thiểu 6 ký tự, sẽ được mã hoá BCrypt trước khi lưu
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Họ tên <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" th:field="*{hoTen}"
+                                               th:classappend="${#fields.hasErrors('hoTen')} ? 'is-invalid'"
+                                               placeholder="VD: Lê Văn C">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}"></div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                                        <select class="form-select" th:field="*{vaiTro}"
+                                                th:classappend="${#fields.hasErrors('vaiTro')} ? 'is-invalid'">
+                                            <option value="">-- Chọn --</option>
+                                            <option th:each="vt : ${dsVaiTro}" th:value="${vt}"
+                                                    th:text="${vt.name() == 'THU_KHO' ? 'Thủ kho'
+                                                            : (vt.name() == 'QUAN_LY' ? 'Quản lý' : 'Quản trị viên')}"></option>
+                                        </select>
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('vaiTro')}" th:errors="*{vaiTro}"></div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                                        <select class="form-select" th:field="*{trangThai}"
+                                                th:classappend="${#fields.hasErrors('trangThai')} ? 'is-invalid'">
+                                            <option value="1">Hoạt động</option>
+                                            <option value="0">Đã khoá</option>
+                                        </select>
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('trangThai')}" th:errors="*{trangThai}"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary px-4">Lưu</button>
+                                    <a th:href="@{/nguoi-dung}" class="btn btn-outline-secondary px-4">Huỷ</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Vị trí kho</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('vi-tri-kho')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+
+                <div class="alert alert-success alert-dismissible fade show" th:if="${thongBao}">
+                    <span th:text="${thongBao}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div class="alert alert-danger alert-dismissible fade show" th:if="${loi}">
+                    <span th:text="${loi}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="bg-light rounded p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h6 class="mb-0">Danh sách vị trí kho</h6>
+                        <a th:href="@{/vi-tri-kho/them}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus me-1"></i> Thêm mới
+                        </a>
+                    </div>
+
+                    <form th:action="@{/vi-tri-kho}" method="get" class="row g-2 mb-4">
+                        <div class="col-md-5">
+                            <input type="text" name="tuKhoa" class="form-control"
+                                   th:value="${tuKhoa}" placeholder="Tìm theo mã hoặc tên vị trí">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Tìm</button>
+                        </div>
+                        <div class="col-auto" th:if="${tuKhoa != null and !tuKhoa.isBlank()}">
+                            <a th:href="@{/vi-tri-kho}" class="btn btn-outline-secondary">Bỏ lọc</a>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th>Mã vị trí</th>
+                                    <th>Tên vị trí</th>
+                                    <th class="text-end">Nhiệt độ hiện tại (°C)</th>
+                                    <th>Mô tả</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="vt : ${danhSach}">
+                                    <td th:text="${vt.maViTri}">VT01</td>
+                                    <td th:text="${vt.tenViTri}">Kho A - Kệ 1</td>
+                                    <td class="text-end">
+                                        <span th:if="${vt.nhietDoHienTai != null}" th:text="${vt.nhietDoHienTai}">-18.00</span>
+                                        <span th:unless="${vt.nhietDoHienTai != null}" class="text-muted">Chưa đo</span>
+                                    </td>
+                                    <td th:text="${vt.moTa}"></td>
+                                    <td class="text-center text-nowrap">
+                                        <a th:href="@{/vi-tri-kho/sua/{id}(id=${vt.id})}"
+                                           class="btn btn-sm btn-primary">Sửa</a>
+                                        <form th:action="@{/vi-tri-kho/xoa/{id}(id=${vt.id})}"
+                                              method="post" class="d-inline"
+                                              th:data-ma="${vt.maViTri}"
+                                              onsubmit="return xacNhanXoa(this)">
+                                            <button type="submit" class="btn btn-sm btn-danger">Xoá</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(danhSach)}">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        Không tìm thấy vị trí nào
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+
+    <script>
+    function xacNhanXoa(form) {
+        return confirm('Xoá vị trí ' + form.dataset.ma + ' ?');
+    }
+    </script>
+</body>
+
+</html>

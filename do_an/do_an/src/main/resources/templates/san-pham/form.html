@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Thông tin sản phẩm</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('san-pham')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="bg-light rounded p-4">
+                            <h6 class="mb-4"
+                                th:text="${sanPham.id == null} ? 'Thêm sản phẩm' : 'Sửa sản phẩm'">Thông tin sản phẩm</h6>
+
+                            <form th:action="@{/san-pham/luu}" th:object="${sanPham}" method="post" novalidate>
+                                <!-- Sửa thì phải mang theo id, nếu không Spring tưởng là thêm mới -->
+                                <input type="hidden" th:field="*{id}">
+                                <!-- Trạng thái không có trên form, giữ nguyên giá trị cũ -->
+                                <input type="hidden" th:field="*{trangThai}">
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Mã sản phẩm <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" th:field="*{maSanPham}"
+                                               th:classappend="${#fields.hasErrors('maSanPham')} ? 'is-invalid'"
+                                               th:readonly="${sanPham.id != null}"
+                                               placeholder="VD: SP005">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('maSanPham')}" th:errors="*{maSanPham}"></div>
+                                        <div class="form-text" th:if="${sanPham.id != null}">
+                                            Mã sản phẩm không sửa được sau khi đã tạo
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" th:field="*{tenSanPham}"
+                                               th:classappend="${#fields.hasErrors('tenSanPham')} ? 'is-invalid'"
+                                               placeholder="VD: Cá hồi phi lê">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('tenSanPham')}" th:errors="*{tenSanPham}"></div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Đơn vị tính <span class="text-danger">*</span></label>
+                                        <select class="form-select" th:field="*{donViTinh}"
+                                                th:classappend="${#fields.hasErrors('donViTinh')} ? 'is-invalid'">
+                                            <option value="">-- Chọn --</option>
+                                            <option th:each="dv : ${dsDonViTinh}" th:value="${dv}" th:text="${dv}"></option>
+                                        </select>
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('donViTinh')}" th:errors="*{donViTinh}"></div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nhiệt độ min (°C)</label>
+                                        <input type="number" step="0.01" class="form-control" th:field="*{nhietDoMin}"
+                                               th:classappend="${#fields.hasErrors('nhietDoMin')} ? 'is-invalid'"
+                                               placeholder="VD: -18">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('nhietDoMin')}" th:errors="*{nhietDoMin}"></div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nhiệt độ max (°C)</label>
+                                        <input type="number" step="0.01" class="form-control" th:field="*{nhietDoMax}"
+                                               th:classappend="${#fields.hasErrors('nhietDoMax')} ? 'is-invalid'"
+                                               placeholder="VD: -15">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('nhietDoMax')}" th:errors="*{nhietDoMax}"></div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Tồn tối thiểu <span class="text-danger">*</span></label>
+                                        <input type="number" step="1" min="0" class="form-control" th:field="*{tonToiThieu}"
+                                               th:classappend="${#fields.hasErrors('tonToiThieu')} ? 'is-invalid'">
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('tonToiThieu')}" th:errors="*{tonToiThieu}"></div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Mô tả</label>
+                                        <textarea class="form-control" rows="3" th:field="*{moTa}"
+                                                  th:classappend="${#fields.hasErrors('moTa')} ? 'is-invalid'"></textarea>
+                                        <div class="text-danger small mt-1"
+                                             th:if="${#fields.hasErrors('moTa')}" th:errors="*{moTa}"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary px-4">Lưu</button>
+                                    <a th:href="@{/san-pham}" class="btn btn-outline-secondary px-4">Huỷ</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+</body>
+
+</html>

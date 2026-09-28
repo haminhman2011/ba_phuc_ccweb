@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Tồn kho</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('ton-kho')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+
+                <div class="bg-light rounded p-4 mb-4">
+                    <h6 class="mb-4">Tra cứu tồn kho</h6>
+
+                    <form th:action="@{/ton-kho}" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Sản phẩm</label>
+                            <select name="sanPhamId" class="form-select">
+                                <option value="">-- Tất cả --</option>
+                                <option th:each="sp : ${dsSanPham}" th:value="${sp.id}"
+                                        th:selected="${sanPhamId != null and sanPhamId == sp.id}"
+                                        th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Vị trí</label>
+                            <select name="viTriId" class="form-select"
+                                    th:disabled="${cheDoXem != 'CHI_TIET'}">
+                                <option value="">-- Tất cả --</option>
+                                <option th:each="vt : ${dsViTri}" th:value="${vt.id}"
+                                        th:selected="${viTriId != null and viTriId == vt.id}"
+                                        th:text="${vt.maViTri + ' - ' + vt.tenViTri}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Tình trạng</label>
+                            <select name="tinhTrang" class="form-select"
+                                    th:disabled="${cheDoXem != 'CHI_TIET'}">
+                                <option value="">-- Tất cả --</option>
+                                <option value="SAP_HET_HAN" th:selected="${tinhTrang == 'SAP_HET_HAN'}">Sắp hết hạn</option>
+                                <option value="QUA_HAN" th:selected="${tinhTrang == 'QUA_HAN'}">Quá hạn</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Chế độ xem</label>
+                            <select name="cheDoXem" class="form-select" onchange="this.form.submit()">
+                                <option value="TONG_HOP" th:selected="${cheDoXem == 'TONG_HOP'}">Tổng hợp theo SP</option>
+                                <option value="CHI_TIET" th:selected="${cheDoXem == 'CHI_TIET'}">Chi tiết theo lô</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Lọc</button>
+                        </div>
+                    </form>
+
+                    <div class="form-text mt-2" th:if="${cheDoXem != 'CHI_TIET'}">
+                        Lọc theo vị trí và tình trạng chỉ dùng được ở chế độ xem chi tiết theo lô.
+                    </div>
+                </div>
+
+                <!-- ===== Xem tổng hợp theo sản phẩm ===== -->
+                <div class="bg-light rounded p-4" th:if="${dsTongHop != null}">
+                    <h6 class="mb-4">Tồn kho tổng hợp</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th>Mã SP</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>ĐVT</th>
+                                    <th class="text-end">Tổng tồn</th>
+                                    <th class="text-end">Tồn tối thiểu</th>
+                                    <th>Tình trạng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="d : ${dsTongHop}" th:classappend="${d.duoiNguong} ? 'table-warning'">
+                                    <td th:text="${d.maSanPham}">SP001</td>
+                                    <td th:text="${d.tenSanPham}">Tên</td>
+                                    <td th:text="${d.donViTinh}">kg</td>
+                                    <td class="text-end fw-bold" th:text="${d.tongTon}">0</td>
+                                    <td class="text-end" th:text="${d.tonToiThieu}">0</td>
+                                    <td>
+                                        <span class="text-danger" th:if="${d.duoiNguong}">
+                                            <i class="fa fa-exclamation-triangle me-1"></i> Dưới mức tối thiểu
+                                        </span>
+                                        <span class="text-success" th:unless="${d.duoiNguong}">Đủ hàng</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dsTongHop)}">
+                                    <td colspan="6" class="text-center text-muted py-4">Không có dữ liệu</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ===== Xem chi tiết theo lô ===== -->
+                <div class="bg-light rounded p-4" th:if="${dsChiTiet != null}">
+                    <h6 class="mb-4">Tồn kho chi tiết theo lô</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th>Mã lô</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Vị trí</th>
+                                    <th>Hạn dùng</th>
+                                    <th class="text-end">Số còn tồn</th>
+                                    <th class="text-end">Số ngày còn lại</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Quá hạn tô đỏ, sắp hết hạn tô cam (đặc tả 5.7) -->
+                                <tr th:each="d : ${dsChiTiet}"
+                                    th:classappend="${d.quaHan} ? 'table-danger' : (${d.sapHetHan} ? 'table-warning' : '')">
+                                    <td th:text="${d.maLo}">LO-001</td>
+                                    <td th:text="${d.tenSanPham}">Tên</td>
+                                    <td>
+                                        <span th:if="${d.tenViTri != null}" th:text="${d.tenViTri}">Kho A</span>
+                                        <span th:unless="${d.tenViTri != null}" class="text-muted">Chưa xếp</span>
+                                    </td>
+                                    <td th:text="${#temporals.format(d.hanSuDung, 'dd/MM/yyyy')}">01/01/2027</td>
+                                    <td class="text-end fw-bold" th:text="${d.soLuongTon}">0</td>
+                                    <td class="text-end">
+                                        <span class="text-danger fw-bold" th:if="${d.quaHan}"
+                                              th:text="'Quá hạn ' + ${-d.soNgayConLai} + ' ngày'">Quá hạn</span>
+                                        <span th:unless="${d.quaHan}" th:text="${d.soNgayConLai} + ' ngày'">0 ngày</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dsChiTiet)}">
+                                    <td colspan="6" class="text-center text-muted py-4">Không có lô nào còn tồn</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+</body>
+
+</html>

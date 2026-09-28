@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Nhập kho</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('phieu-nhap')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+
+                <!-- Lưu thành công, hiện kèm mã phiếu vừa tạo -->
+                <div class="alert alert-success alert-dismissible fade show" th:if="${thongBao}">
+                    <span th:text="${thongBao}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Lỗi ngoài dự tính: chỉ báo chung, không lộ chi tiết kỹ thuật -->
+                <div class="alert alert-danger" th:if="${loiHeThong}" th:text="${loiHeThong}"></div>
+
+                <!-- (4c) Hàng đã/sắp hết hạn: bắt xác nhận lại trước khi lưu -->
+                <div class="alert alert-warning" th:if="${canhBaoHetHan}">
+                    <i class="fa fa-exclamation-triangle me-2"></i>
+                    <span th:text="${canhBaoHetHan}"></span>
+                </div>
+
+                <form th:action="@{/phieu-nhap/luu}" th:object="${phieuNhapForm}" method="post" novalidate>
+                    <input type="hidden" th:field="*{xacNhanHetHan}">
+
+                    <!-- (4a) Lỗi chung của cả phiếu, ví dụ chưa có dòng hàng nào.
+                         Phải đặt trong form vì #fields chỉ dùng được khi đã có th:object. -->
+                    <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                        <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+                    </div>
+
+                    <!-- ===== Thông tin phiếu ===== -->
+                    <div class="bg-light rounded p-4 mb-4">
+                        <h6 class="mb-4">Thông tin phiếu nhập</h6>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Mã phiếu</label>
+                                <input type="text" class="form-control" th:value="${maPhieuDuKien}" readonly>
+                                <div class="form-text">Hệ thống tự sinh khi lưu</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Ngày nhập</label>
+                                <input type="text" class="form-control" th:value="${#temporals.format(homNay, 'dd/MM/yyyy')}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nhà cung cấp</label>
+                                <input type="text" class="form-control" th:field="*{nhaCungCap}"
+                                       th:classappend="${#fields.hasErrors('nhaCungCap')} ? 'is-invalid'"
+                                       placeholder="VD: Công ty Thủy sản Miền Tây">
+                                <div class="text-danger small mt-1"
+                                     th:if="${#fields.hasErrors('nhaCungCap')}" th:errors="*{nhaCungCap}"></div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Ghi chú</label>
+                                <input type="text" class="form-control" th:field="*{ghiChu}"
+                                       th:classappend="${#fields.hasErrors('ghiChu')} ? 'is-invalid'">
+                                <div class="text-danger small mt-1"
+                                     th:if="${#fields.hasErrors('ghiChu')}" th:errors="*{ghiChu}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Chi tiết lô hàng ===== -->
+                    <div class="bg-light rounded p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="mb-0">Chi tiết lô hàng</h6>
+                            <button type="button" class="btn btn-sm btn-success" onclick="themDong()">
+                                <i class="fa fa-plus me-1"></i> Thêm dòng
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0" id="bangChiTiet">
+                                <thead>
+                                    <tr class="text-dark">
+                                        <th style="width:40px">#</th>
+                                        <th style="min-width:170px">Sản phẩm <span class="text-danger">*</span></th>
+                                        <th style="min-width:140px">Mã lô <span class="text-danger">*</span></th>
+                                        <th style="min-width:150px">Ngày SX</th>
+                                        <th style="min-width:150px">Hạn dùng <span class="text-danger">*</span></th>
+                                        <th style="min-width:150px">Vị trí</th>
+                                        <th style="min-width:100px">SL <span class="text-danger">*</span></th>
+                                        <th style="min-width:120px">Đơn giá</th>
+                                        <th style="width:60px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="dong, st : *{chiTiet}">
+                                        <td class="stt text-center" th:text="${st.count}">1</td>
+
+                                        <td>
+                                            <select class="form-select form-select-sm"
+                                                    th:field="*{chiTiet[__${st.index}__].sanPhamId}"
+                                                    th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].sanPhamId')} ? 'is-invalid'">
+                                                <option value="">-- Chọn --</option>
+                                                <option th:each="sp : ${dsSanPham}" th:value="${sp.id}"
+                                                        th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}"></option>
+                                            </select>
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].sanPhamId')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].sanPhamId}"></div>
+                                        </td>
+
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm"
+                                                   th:field="*{chiTiet[__${st.index}__].maLo}"
+                                                   th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].maLo')} ? 'is-invalid'"
+                                                   placeholder="VD: LO-CA-003">
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].maLo')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].maLo}"></div>
+                                        </td>
+
+                                        <td>
+                                            <input type="date" class="form-control form-control-sm"
+                                                   th:field="*{chiTiet[__${st.index}__].ngaySanXuat}"
+                                                   th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].ngaySanXuat')} ? 'is-invalid'">
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].ngaySanXuat')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].ngaySanXuat}"></div>
+                                        </td>
+
+                                        <td>
+                                            <input type="date" class="form-control form-control-sm"
+                                                   th:field="*{chiTiet[__${st.index}__].hanSuDung}"
+                                                   th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].hanSuDung')} ? 'is-invalid'">
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].hanSuDung')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].hanSuDung}"></div>
+                                        </td>
+
+                                        <td>
+                                            <select class="form-select form-select-sm"
+                                                    th:field="*{chiTiet[__${st.index}__].viTriId}"
+                                                    th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].viTriId')} ? 'is-invalid'">
+                                                <option value="">-- Chưa xếp --</option>
+                                                <option th:each="vt : ${dsViTri}" th:value="${vt.id}"
+                                                        th:text="${vt.maViTri + ' - ' + vt.tenViTri}"></option>
+                                            </select>
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].viTriId')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].viTriId}"></div>
+                                        </td>
+
+                                        <td>
+                                            <input type="number" step="1" min="1" class="form-control form-control-sm"
+                                                   th:field="*{chiTiet[__${st.index}__].soLuong}"
+                                                   th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].soLuong')} ? 'is-invalid'">
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].soLuong')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].soLuong}"></div>
+                                        </td>
+
+                                        <td>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm"
+                                                   th:field="*{chiTiet[__${st.index}__].donGia}"
+                                                   th:classappend="${#fields.hasErrors('chiTiet[' + st.index + '].donGia')} ? 'is-invalid'">
+                                            <div class="text-danger small mt-1"
+                                                 th:if="${#fields.hasErrors('chiTiet[' + st.index + '].donGia')}"
+                                                 th:errors="*{chiTiet[__${st.index}__].donGia}"></div>
+                                        </td>
+
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="xoaDong(this)" title="Xoá dòng">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-muted small mt-2" id="bangRong" style="display:none">
+                            Chưa có dòng hàng nào. Bấm "Thêm dòng" để nhập.
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary px-4"
+                                    th:if="${canhBaoHetHan == null}">Lưu phiếu nhập</button>
+
+                            <!-- (4c) Sau khi đã cảnh báo, nút này bật cờ xác nhận rồi gửi lại -->
+                            <button type="submit" class="btn btn-warning px-4"
+                                    th:if="${canhBaoHetHan != null}"
+                                    onclick="document.getElementById('xacNhanHetHan').value='true'">
+                                Xác nhận vẫn nhập
+                            </button>
+
+                            <a th:href="@{/phieu-nhap}" class="btn btn-outline-secondary px-4">Huỷ</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <!-- Khuôn của một dòng trống, JS nhân bản ra mỗi lần bấm "Thêm dòng".
+         __i__ là chỗ giữ số thứ tự, sẽ được đánh số lại ngay sau khi chèn. -->
+    <template id="mauDong">
+        <tr>
+            <td class="stt text-center">0</td>
+            <td>
+                <select class="form-select form-select-sm" name="chiTiet[__i__].sanPhamId">
+                    <option value="">-- Chọn --</option>
+                    <option th:each="sp : ${dsSanPham}" th:value="${sp.id}"
+                            th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}"></option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="chiTiet[__i__].maLo" placeholder="VD: LO-CA-003"></td>
+            <td><input type="date" class="form-control form-control-sm" name="chiTiet[__i__].ngaySanXuat"></td>
+            <td><input type="date" class="form-control form-control-sm" name="chiTiet[__i__].hanSuDung"></td>
+            <td>
+                <select class="form-select form-select-sm" name="chiTiet[__i__].viTriId">
+                    <option value="">-- Chưa xếp --</option>
+                    <option th:each="vt : ${dsViTri}" th:value="${vt.id}"
+                            th:text="${vt.maViTri + ' - ' + vt.tenViTri}"></option>
+                </select>
+            </td>
+            <td><input type="number" step="1" min="1" class="form-control form-control-sm" name="chiTiet[__i__].soLuong"></td>
+            <td><input type="number" step="0.01" min="0" class="form-control form-control-sm" name="chiTiet[__i__].donGia"></td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="xoaDong(this)" title="Xoá dòng">
+                    <i class="fa fa-times"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+
+    <script th:src="@{/js/phieu-nhap.js}"></script>
+</body>
+
+</html>

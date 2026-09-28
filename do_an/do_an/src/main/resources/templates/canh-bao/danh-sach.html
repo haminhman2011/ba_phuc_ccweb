@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Cảnh báo hạn dùng</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('canh-bao')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+
+                <div class="alert alert-success alert-dismissible fade show" th:if="${thongBao}">
+                    <span th:text="${thongBao}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div class="alert alert-danger alert-dismissible fade show" th:if="${loi}">
+                    <span th:text="${loi}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="bg-light rounded p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h6 class="mb-0">
+                            Danh sách cảnh báo
+                            <span class="badge bg-danger ms-2" th:if="${soChuaXuLy > 0}"
+                                  th:text="${soChuaXuLy + ' chưa xử lý'}">0</span>
+                        </h6>
+                        <!-- Job tự chạy 1 giờ sáng mỗi ngày, nút này để quét ngay khi cần -->
+                        <form th:action="@{/canh-bao/quet}" method="post" class="m-0">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fa fa-sync me-1"></i> Quét ngay
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Bộ lọc theo loại và trạng thái xử lý -->
+                    <form th:action="@{/canh-bao}" method="get" class="row g-2 mb-4">
+                        <div class="col-md-3">
+                            <select name="loai" class="form-select">
+                                <option value="">-- Tất cả loại --</option>
+                                <option value="SAP_HET_HAN" th:selected="${loai == 'SAP_HET_HAN'}">Sắp hết hạn</option>
+                                <option value="QUA_HAN" th:selected="${loai == 'QUA_HAN'}">Quá hạn</option>
+                                <option value="TON_TOI_THIEU" th:selected="${loai == 'TON_TOI_THIEU'}">Dưới tồn tối thiểu</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="daXuLy" class="form-select">
+                                <option value="">-- Tất cả trạng thái --</option>
+                                <option value="0" th:selected="${daXuLy != null and daXuLy == 0}">Chưa xử lý</option>
+                                <option value="1" th:selected="${daXuLy != null and daXuLy == 1}">Đã xử lý</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Lọc</button>
+                        </div>
+                        <div class="col-auto" th:if="${loai != null or daXuLy != null}">
+                            <a th:href="@{/canh-bao}" class="btn btn-outline-secondary">Bỏ lọc</a>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th scope="col">Loại</th>
+                                    <th scope="col">Nội dung</th>
+                                    <th scope="col">Mã lô / SP</th>
+                                    <th scope="col">Hạn dùng</th>
+                                    <th scope="col">Ngày cảnh báo</th>
+                                    <th scope="col">Trạng thái</th>
+                                    <th scope="col" class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="cb : ${danhSach}"
+                                    th:classappend="${cb.daXuLy == 0 and cb.loaiCanhBao.name() == 'QUA_HAN'} ? 'table-danger'
+                                                  : (${cb.daXuLy == 0 and cb.loaiCanhBao.name() == 'SAP_HET_HAN'} ? 'table-warning' : '')">
+                                    <td>
+                                        <span class="badge bg-danger"
+                                              th:if="${cb.loaiCanhBao.name() == 'QUA_HAN'}">Quá hạn</span>
+                                        <span class="badge bg-warning text-dark"
+                                              th:if="${cb.loaiCanhBao.name() == 'SAP_HET_HAN'}">Sắp hết hạn</span>
+                                        <span class="badge bg-info text-dark"
+                                              th:if="${cb.loaiCanhBao.name() == 'TON_TOI_THIEU'}">Dưới tồn tối thiểu</span>
+                                    </td>
+                                    <td th:text="${cb.noiDung}">Nội dung</td>
+                                    <td>
+                                        <span th:if="${cb.loHang != null}" th:text="${cb.loHang.maLo}">LO-001</span>
+                                        <span th:if="${cb.loHang == null and cb.sanPham != null}"
+                                              th:text="${cb.sanPham.maSanPham}">SP001</span>
+                                    </td>
+                                    <td th:text="${cb.loHang != null ? #temporals.format(cb.loHang.hanSuDung, 'dd/MM/yyyy') : '-'}">-</td>
+                                    <td th:text="${#temporals.format(cb.ngayCanhBao, 'dd/MM/yyyy HH:mm')}">-</td>
+                                    <td>
+                                        <span class="badge bg-secondary" th:if="${cb.daXuLy == 0}">Chưa xử lý</span>
+                                        <span class="badge bg-success" th:if="${cb.daXuLy == 1}">Đã xử lý</span>
+                                    </td>
+                                    <td class="text-center text-nowrap">
+                                        <form th:action="@{/canh-bao/xu-ly/{id}(id=${cb.id})}" method="post"
+                                              class="d-inline" th:if="${cb.daXuLy == 0}">
+                                            <button type="submit" class="btn btn-sm btn-success">Đã xử lý</button>
+                                        </form>
+                                        <span class="text-muted small" th:if="${cb.daXuLy == 1}">—</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(danhSach)}">
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        Không có cảnh báo nào
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-text mt-3">
+                        Ngưỡng cảnh báo sắp hết hạn hiện tại: <strong th:text="${nguongNgay}">7</strong> ngày.
+                        Đổi ở <code>kholanh.canh-bao.nguong-ngay</code> trong application.properties.
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+</body>
+
+</html>

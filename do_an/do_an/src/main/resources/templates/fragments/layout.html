@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+
+  <!-- FRAGMENT: css dùng chung -->
+  <th:block th:fragment="css">
+  
+    <meta charset="utf-8">
+    
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link th:href="@{/img/favicon.ico}" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link th:href="@{/lib/owlcarousel/assets/owl.carousel.min.css}" rel="stylesheet">
+    <link th:href="@{/lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css}" rel="stylesheet">
+
+    <!-- Bootstrap + Template Stylesheet -->
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+  </th:block>
+
+</head>
+<body>
+	<!-- FRAGMENT: spinner -->
+<div th:fragment="spinner" id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+
+<!-- FRAGMENT: sidebar -->
+<!-- Tham so "muc" cho biet trang hien tai, dung de to sang menu tuong ung -->
+<div th:fragment="sidebar(muc)" class="sidebar pe-4 pb-3">
+    <nav class="navbar bg-light navbar-light">
+        <a th:href="@{/dashboard}" class="navbar-brand mx-4 mb-3">
+            <h3 class="text-primary"><i class="fa fa-snowflake me-2"></i>KHO LẠNH</h3>
+        </a>
+        <div class="d-flex align-items-center ms-4 mb-4">
+            <div class="position-relative">
+                <img class="rounded-circle" th:src="@{/img/user.jpg}" alt="" style="width: 40px; height: 40px;">
+                <div class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1"></div>
+            </div>
+            <div class="ms-3">
+                <h6 class="mb-0" sec:authentication="principal.hoTen">Họ tên</h6>
+                <span sec:authentication="principal.tenVaiTro">Vai trò</span>
+            </div>
+        </div>
+        <div class="navbar-nav w-100">
+            <a th:href="@{/dashboard}" class="nav-item nav-link" th:classappend="${muc == 'dashboard'} ? 'active'"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+            <!-- Chi thu kho moi thay cac muc thao tac kho -->
+            <a th:href="@{/san-pham}" class="nav-item nav-link" th:classappend="${muc == 'san-pham'} ? 'active'" sec:authorize="hasRole('THU_KHO')"><i class="fa fa-box me-2"></i>Sản phẩm</a>
+            <a th:href="@{/vi-tri-kho}" class="nav-item nav-link" th:classappend="${muc == 'vi-tri-kho'} ? 'active'" sec:authorize="hasRole('THU_KHO')"><i class="fa fa-warehouse me-2"></i>Vị trí kho</a>
+            <a th:href="@{/phieu-nhap}" class="nav-item nav-link" th:classappend="${muc == 'phieu-nhap'} ? 'active'" sec:authorize="hasRole('THU_KHO')"><i class="fa fa-arrow-down me-2"></i>Nhập kho</a>
+            <a th:href="@{/phieu-xuat}" class="nav-item nav-link" th:classappend="${muc == 'phieu-xuat'} ? 'active'" sec:authorize="hasRole('THU_KHO')"><i class="fa fa-arrow-up me-2"></i>Xuất kho</a>
+
+            <!-- Ca hai vai tro deu xem duoc -->
+            <a th:href="@{/ton-kho}" class="nav-item nav-link" th:classappend="${muc == 'ton-kho'} ? 'active'"><i class="fa fa-layer-group me-2"></i>Tồn kho</a>
+            <a th:href="@{/canh-bao}" class="nav-item nav-link" th:classappend="${muc == 'canh-bao'} ? 'active'"><i class="fa fa-bell me-2"></i>Cảnh báo</a>
+
+            <!-- Chi quan ly moi thay -->
+            <a th:href="@{/bao-cao}" class="nav-item nav-link" th:classappend="${muc == 'bao-cao'} ? 'active'" sec:authorize="hasRole('QUAN_LY')"><i class="fa fa-chart-bar me-2"></i>Báo cáo</a>
+            <a th:href="@{/nguoi-dung}" class="nav-item nav-link" th:classappend="${muc == 'nguoi-dung'} ? 'active'" sec:authorize="hasRole('QUAN_LY')"><i class="fa fa-users me-2"></i>Người dùng</a>
+        </div>
+    </nav>
+</div>
+
+
+<!-- FRAGMENT: navbar -->
+<nav th:fragment="navbar" class="navbar navbar-expand bg-light navbar-light sticky-top px-4 py-0">
+    <a th:href="@{/}" class="navbar-brand d-flex d-lg-none me-4">
+        <h2 class="text-primary mb-0"><i class="fa fa-hashtag"></i></h2>
+    </a>
+    <a href="#" class="sidebar-toggler flex-shrink-0">
+        <i class="fa fa-bars"></i>
+    </a>
+    <form class="d-none d-md-flex ms-4">
+        <input class="form-control border-0" type="search" placeholder="Search">
+    </form>
+    <div class="navbar-nav align-items-center ms-auto">
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fa fa-envelope me-lg-2"></i>
+                <span class="d-none d-lg-inline-flex">Message</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
+                <a href="#" class="dropdown-item">
+                    <div class="d-flex align-items-center">
+                        <img class="rounded-circle" src="img/user.jpg" alt="" style="width: 40px; height: 40px;">
+                        <div class="ms-2">
+                            <h6 class="fw-normal mb-0">Jhon send you a message</h6>
+                            <small>15 minutes ago</small>
+                        </div>
+                    </div>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="#" class="dropdown-item">
+                    <div class="d-flex align-items-center">
+                        <img class="rounded-circle" src="img/user.jpg" alt="" style="width: 40px; height: 40px;">
+                        <div class="ms-2">
+                            <h6 class="fw-normal mb-0">Jhon send you a message</h6>
+                            <small>15 minutes ago</small>
+                        </div>
+                    </div>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="#" class="dropdown-item">
+                    <div class="d-flex align-items-center">
+                        <img class="rounded-circle" src="img/user.jpg" alt="" style="width: 40px; height: 40px;">
+                        <div class="ms-2">
+                            <h6 class="fw-normal mb-0">Jhon send you a message</h6>
+                            <small>15 minutes ago</small>
+                        </div>
+                    </div>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="#" class="dropdown-item text-center">See all message</a>
+            </div>
+        </div>
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fa fa-bell me-lg-2"></i>
+                <span class="d-none d-lg-inline-flex">Notificatin</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
+                <a href="#" class="dropdown-item">
+                    <h6 class="fw-normal mb-0">Profile updated</h6>
+                    <small>15 minutes ago</small>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="#" class="dropdown-item">
+                    <h6 class="fw-normal mb-0">New user added</h6>
+                    <small>15 minutes ago</small>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="#" class="dropdown-item">
+                    <h6 class="fw-normal mb-0">Password changed</h6>
+                    <small>15 minutes ago</small>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="#" class="dropdown-item text-center">See all notifications</a>
+            </div>
+        </div>
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                <img class="rounded-circle me-lg-2" th:src="@{/img/user.jpg}" alt="" style="width: 40px; height: 40px;">
+                <span class="d-none d-lg-inline-flex" sec:authentication="principal.hoTen">Họ tên</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
+                <!-- Spring Security bat dang xuat phai la POST.
+                     th:action giup Thymeleaf tu chen CSRF token vao form. -->
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="dropdown-item">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<!-- FRAGMENT: footer -->
+<div th:fragment="footer" class="container-fluid pt-4 px-4">
+    <div class="bg-light rounded-top p-4">
+        <div class="row">
+            <div class="col-12 col-sm-6 text-center text-sm-start">
+                &copy; <a href="#">Your Site Name</a>, All Right Reserved.
+            </div>
+            <div class="col-12 col-sm-6 text-center text-sm-end">
+                Designed By <a href="https://htmlcodex.com">HTML Codex</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+  <!-- FRAGMENT: js dùng chung -->
+  <th:block th:fragment="js">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/lib/chart/chart.min.js}"></script>
+    <script th:src="@{/lib/easing/easing.min.js}"></script>
+    <script th:src="@{/lib/waypoints/waypoints.min.js}"></script>
+    <script th:src="@{/lib/owlcarousel/owl.carousel.min.js}"></script>
+    <script th:src="@{/lib/tempusdominus/js/moment.min.js}"></script>
+    <script th:src="@{/lib/tempusdominus/js/moment-timezone.min.js}"></script>
+    <script th:src="@{/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js}"></script>
+    <script th:src="@{/js/main.js}"></script>
+
+  </th:block>
+
+</body>
+</html>

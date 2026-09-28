@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Quản lý kho lạnh - Báo cáo</title>
+    <meta charset="utf-8">
+    <th:block th:replace="~{fragments/layout :: css}"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid position-relative bg-white d-flex p-0">
+        <div th:replace="~{fragments/layout :: spinner}"></div>
+        <div th:replace="~{fragments/layout :: sidebar('bao-cao')}"></div>
+
+        <div class="content">
+            <div th:replace="~{fragments/layout :: navbar}"></div>
+
+            <div class="container-fluid pt-4 px-4">
+
+                <div class="alert alert-danger" th:if="${loi}" th:text="${loi}"></div>
+
+                <div class="bg-light rounded p-4 mb-4">
+                    <h6 class="mb-4">Báo cáo</h6>
+
+                    <form th:action="@{/bao-cao}" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Từ ngày <span class="text-danger">*</span></label>
+                            <input type="date" name="tuNgay" class="form-control" required
+                                   th:value="${tuNgay != null ? #temporals.format(tuNgay, 'yyyy-MM-dd') : ''}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Đến ngày <span class="text-danger">*</span></label>
+                            <input type="date" name="denNgay" class="form-control" required
+                                   th:value="${denNgay != null ? #temporals.format(denNgay, 'yyyy-MM-dd') : ''}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Loại báo cáo <span class="text-danger">*</span></label>
+                            <select name="loaiBaoCao" class="form-select">
+                                <option value="NXT" th:selected="${loaiBaoCao == 'NXT'}">Nhập - Xuất - Tồn</option>
+                                <option value="HUY" th:selected="${loaiBaoCao == 'HUY'}">Hàng huỷ</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Xem báo cáo</button>
+                        </div>
+                        <div class="col-auto" th:if="${tuNgay != null and denNgay != null and loi == null}">
+                            <a class="btn btn-outline-success"
+                               th:href="@{/bao-cao/xuat-file(tuNgay=${#temporals.format(tuNgay,'yyyy-MM-dd')},
+                                                             denNgay=${#temporals.format(denNgay,'yyyy-MM-dd')},
+                                                             loaiBaoCao=${loaiBaoCao})}">
+                                <i class="fa fa-download me-1"></i> Xuất file
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ===== Bảng Nhập - Xuất - Tồn ===== -->
+                <div class="bg-light rounded p-4" th:if="${dsTon != null}">
+                    <h6 class="mb-4">
+                        Nhập - Xuất - Tồn
+                        <small class="text-muted"
+                               th:text="'từ ' + ${#temporals.format(tuNgay,'dd/MM/yyyy')} + ' đến ' + ${#temporals.format(denNgay,'dd/MM/yyyy')}"></small>
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th>Mã SP</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>ĐVT</th>
+                                    <th class="text-end">Tồn đầu</th>
+                                    <th class="text-end">Nhập trong kỳ</th>
+                                    <th class="text-end">Xuất trong kỳ</th>
+                                    <th class="text-end">Tồn cuối</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="d : ${dsTon}">
+                                    <td th:text="${d.maSanPham}">SP001</td>
+                                    <td th:text="${d.tenSanPham}">Tên</td>
+                                    <td th:text="${d.donViTinh}">kg</td>
+                                    <td class="text-end" th:text="${d.tonDau}">0</td>
+                                    <td class="text-end text-success" th:text="${d.nhapTrongKy}">0</td>
+                                    <td class="text-end text-danger" th:text="${d.xuatTrongKy}">0</td>
+                                    <td class="text-end fw-bold" th:text="${d.tonCuoi}">0</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dsTon)}">
+                                    <td colspan="7" class="text-center text-muted py-4">Không có dữ liệu</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ===== Bảng hàng huỷ ===== -->
+                <div class="bg-light rounded p-4" th:if="${dsHuy != null}">
+                    <h6 class="mb-4">
+                        Hàng huỷ
+                        <small class="text-muted"
+                               th:text="'từ ' + ${#temporals.format(tuNgay,'dd/MM/yyyy')} + ' đến ' + ${#temporals.format(denNgay,'dd/MM/yyyy')}"></small>
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th>Mã lô</th>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-end">Số lượng huỷ</th>
+                                    <th>Hạn dùng</th>
+                                    <th>Ngày huỷ</th>
+                                    <th>Lý do</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="d : ${dsHuy}">
+                                    <td th:text="${d.maLo}">LO-001</td>
+                                    <td th:text="${d.tenSanPham}">Tên</td>
+                                    <td class="text-end" th:text="${d.soLuongHuy}">0</td>
+                                    <td th:text="${d.hanSuDung != null ? #temporals.format(d.hanSuDung,'dd/MM/yyyy') : '-'}">-</td>
+                                    <td th:text="${d.ngayHuy != null ? #temporals.format(d.ngayHuy,'dd/MM/yyyy') : '-'}">-</td>
+                                    <td th:text="${d.lyDo}">-</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dsHuy)}">
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        Không có hàng huỷ trong khoảng thời gian này
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </div>
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: js}"></th:block>
+</body>
+
+</html>
