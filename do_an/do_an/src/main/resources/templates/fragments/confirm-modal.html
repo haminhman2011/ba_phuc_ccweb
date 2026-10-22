@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Modal xác nhận dùng chung. Nút kích hoạt khai báo:
+    data-confirm-action  URL nhận POST (bắt buộc)
+    data-confirm-message câu hỏi, ví dụ "Bạn có chắc muốn xóa khoa"
+    data-confirm-target  đối tượng in đậm, ví dụ "CNTT – Công nghệ thông tin"
+    data-confirm-title / data-confirm-button / data-confirm-variant (danger | warning | primary)
+    data-param-xxx       tham số gửi kèm dạng hidden input (data-param-ma-m-h → maMH)
+-->
+<div th:fragment="confirm-modal" class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="confirmForm" th:action="@{/}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmTitle">Xác nhận xóa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div id="confirmIcon" class="confirm-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <p class="mb-0 pt-2">
+                            <span id="confirmMessage">Bạn có chắc muốn xóa</span>
+                            <strong id="confirmTarget"></strong>?
+                        </p>
+                    </div>
+                    <div id="confirmParams"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger" id="confirmButton">Xóa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/auth}">
+<head>
+    <title>Đăng nhập</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="text-center mb-4 d-lg-none">
+        <div class="auth-logo mx-auto mb-2 text-white" style="background: var(--primary)"><i class="bi bi-mortarboard-fill"></i></div>
+        <div class="fw-bold fs-5" style="color: var(--primary)">Hệ thống đăng ký môn học</div>
+    </div>
+
+    <div class="auth-card">
+        <h1 class="h4 fw-bold mb-1">Đăng nhập</h1>
+        <p class="text-muted small mb-3">Dùng tài khoản do phòng đào tạo cấp.</p>
+
+        <div th:if="${param.error}" class="alert alert-danger py-2 small d-flex gap-2 align-items-start" role="alert">
+            <i class="bi bi-exclamation-circle-fill mt-1"></i><span>Sai tên đăng nhập hoặc mật khẩu.</span>
+        </div>
+        <div th:if="${param.locked}" class="alert alert-danger py-2 small d-flex gap-2 align-items-start" role="alert">
+            <i class="bi bi-lock-fill mt-1"></i><span>Tài khoản đã bị khóa. Liên hệ phòng đào tạo.</span>
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success py-2 small d-flex gap-2 align-items-start" role="alert">
+            <i class="bi bi-check-circle-fill mt-1"></i><span>Bạn đã đăng xuất.</span>
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="mb-3">
+                <label for="username" class="form-label">Tên đăng nhập</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="username" name="username" class="form-control" autocomplete="username"
+                           placeholder="Nhập tên đăng nhập" required autofocus>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="password" name="password" class="form-control"
+                           autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+                    <button type="button" class="btn btn-outline-secondary" data-toggle-password="#password"
+                            aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button>
+                </div>
+            </div>
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                <label class="form-check-label" for="remember-me">Ghi nhớ đăng nhập</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+            </button>
+        </form>
+    </div>
+
+    <p th:if="${hienTaiKhoanMau}" class="text-center text-muted small mt-3 mb-0">
+        Tài khoản dùng thử: admin/admin123 · gv01/123456 · sv01/123456
+    </p>
+</th:block>
+</body>
+</html>

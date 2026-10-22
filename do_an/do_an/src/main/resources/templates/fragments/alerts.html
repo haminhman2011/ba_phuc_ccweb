@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Thông báo flash: successMessage / errorMessage (từ RedirectAttributes hoặc model) -->
+<th:block th:fragment="alerts">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show d-flex align-items-start gap-2"
+         role="alert" data-auto-dismiss>
+        <i class="bi bi-check-circle-fill mt-1"></i>
+        <div th:text="${successMessage}">Thành công</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+    </div>
+    <!-- Khi modal được mở lại do lỗi, lỗi hiển thị trong modal thay vì ở đây -->
+    <div th:if="${errorMessage != null and openModal == null}"
+         class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-2"
+         role="alert" data-auto-dismiss>
+        <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+        <div th:text="${errorMessage}">Lỗi</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+    </div>
+</th:block>
+
+<!-- Lỗi nghiệp vụ hiển thị bên trong modal thêm/sửa -->
+<th:block th:fragment="modal-error">
+    <div th:if="${errorMessage != null and openModal != null}" class="alert alert-danger py-2 small modal-error d-flex gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i><span th:text="${errorMessage}"></span>
+    </div>
+</th:block>
+</body>
+</html>

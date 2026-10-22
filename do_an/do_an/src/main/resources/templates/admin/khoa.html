@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Quản lý khoa</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Quản lý khoa</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Khoa</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card table-card">
+        <div class="card-body border-bottom">
+            <form class="toolbar" th:action="@{/admin/khoa}" method="get">
+                <div class="toolbar-filters">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" th:value="${q}" class="form-control"
+                               placeholder="Tìm theo mã hoặc tên…" aria-label="Tìm kiếm">
+                    </div>
+                    <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#khoaModal"
+                        data-mode="add"><i class="bi bi-plus-lg me-1"></i>Thêm mới</button>
+            </form>
+        </div>
+
+        <th:block th:if="${#lists.isEmpty(khoas)}">
+            <div th:replace="~{fragments/common :: empty(${#strings.isEmpty(q)} ? 'Chưa có dữ liệu' : 'Không tìm thấy khoa phù hợp.', null, '#khoaModal')}"></div>
+        </th:block>
+
+        <div th:unless="${#lists.isEmpty(khoas)}" class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th>Mã khoa</th>
+                    <th>Tên khoa</th>
+                    <th class="text-center">Số lớp</th>
+                    <th class="text-center">Số giảng viên</th>
+                    <th class="text-center">Số môn học</th>
+                    <th class="col-actions">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="k, st : ${khoas}">
+                    <td class="col-stt" th:text="${st.count}">1</td>
+                    <td class="ma" th:text="${k.maKhoa}">CNTT</td>
+                    <td th:text="${k.tenKhoa}">Công nghệ thông tin</td>
+                    <td class="text-center" th:text="${k.soLop}">0</td>
+                    <td class="text-center" th:text="${k.soGiangVien}">0</td>
+                    <td class="text-center" th:text="${k.soMonHoc}">0</td>
+                    <td class="col-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-icon" title="Sửa khoa"
+                                data-tooltip data-bs-toggle="modal" data-bs-target="#khoaModal" data-mode="edit"
+                                th:data-ma-khoa="${k.maKhoa}" th:data-ten-khoa="${k.tenKhoa}">
+                            <i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa khoa"
+                                data-tooltip
+                                th:data-confirm-action="@{/admin/khoa/{ma}/xoa(ma=${k.maKhoa})}"
+                                data-confirm-message="Bạn có chắc muốn xóa khoa"
+                                th:data-confirm-target="|${k.maKhoa} – ${k.tenKhoa}|">
+                            <i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal thêm/sửa khoa -->
+    <div class="modal fade" id="khoaModal" tabindex="-1" aria-labelledby="khoaModalTitle" aria-hidden="true"
+         data-form-modal data-title-add="Thêm khoa" data-title-edit="Sửa khoa"
+         th:data-open-on-load="${openModal != null}">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/admin/khoa/luu}" th:object="${form}" method="post" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="khoaModalTitle" th:text="*{editMode} ? 'Sửa khoa' : 'Thêm khoa'">Thêm khoa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <th:block th:replace="~{fragments/alerts :: modal-error}"></th:block>
+                        <input type="hidden" th:field="*{editMode}">
+                        <div class="mb-3">
+                            <label for="maKhoa" class="form-label required">Mã khoa</label>
+                            <input type="text" th:field="*{maKhoa}" class="form-control" th:errorclass="is-invalid"
+                                   maxlength="10" placeholder="VD: CNTT" data-pk data-uppercase
+                                   th:readonly="*{editMode}">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('maKhoa')}" th:errors="*{maKhoa}"></div>
+                            <div class="form-text">Chữ in hoa không dấu và số, tối đa 10 ký tự.</div>
+                        </div>
+                        <div class="mb-1">
+                            <label for="tenKhoa" class="form-label required">Tên khoa</label>
+                            <input type="text" th:field="*{tenKhoa}" class="form-control" th:errorclass="is-invalid"
+                                   maxlength="100" placeholder="VD: Công nghệ thông tin">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('tenKhoa')}" th:errors="*{tenKhoa}"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

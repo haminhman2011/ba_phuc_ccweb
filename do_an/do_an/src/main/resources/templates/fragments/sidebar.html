@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<aside th:fragment="sidebar" class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="appSidebar"
+       aria-label="Menu chính">
+    <div class="sidebar-inner">
+        <div class="sidebar-brand">
+            <span class="brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+            <div class="flex-grow-1">
+                <div class="brand-title">Đăng ký môn học</div>
+                <div class="brand-sub">Hệ thống quản lý đào tạo</div>
+            </div>
+            <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas"
+                    data-bs-target="#appSidebar" aria-label="Đóng menu"></button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <th:block sec:authorize="hasRole('ADMIN')">
+                <div class="nav-section">Quản trị</div>
+                <a th:href="@{/admin}" class="sidebar-link" th:classappend="${currentPath == '/admin'} ? 'active'">
+                    <i class="bi bi-grid-1x2"></i><span>Tổng quan</span></a>
+                <a th:href="@{/admin/khoa}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/khoa')} ? 'active'">
+                    <i class="bi bi-building"></i><span>Khoa</span></a>
+                <a th:href="@{/admin/lop}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/lop')} ? 'active'">
+                    <i class="bi bi-collection"></i><span>Lớp</span></a>
+                <a th:href="@{/admin/sinh-vien}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/sinh-vien')} ? 'active'">
+                    <i class="bi bi-people"></i><span>Sinh viên</span></a>
+                <a th:href="@{/admin/giang-vien}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/giang-vien')} ? 'active'">
+                    <i class="bi bi-person-badge"></i><span>Giảng viên</span></a>
+                <a th:href="@{/admin/mon-hoc}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/mon-hoc')} ? 'active'">
+                    <i class="bi bi-journal-bookmark"></i><span>Môn học</span></a>
+                <a th:href="@{/admin/phan-cong}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/phan-cong')} ? 'active'">
+                    <i class="bi bi-calendar2-check"></i><span>Phân công giảng dạy</span></a>
+                <a th:href="@{/admin/tai-khoan}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/admin/tai-khoan')} ? 'active'">
+                    <i class="bi bi-shield-lock"></i><span>Tài khoản</span></a>
+            </th:block>
+
+            <th:block sec:authorize="hasRole('SV')">
+                <div class="nav-section">Sinh viên</div>
+                <a th:href="@{/sv}" class="sidebar-link" th:classappend="${currentPath == '/sv'} ? 'active'">
+                    <i class="bi bi-house"></i><span>Trang chủ</span></a>
+                <a th:href="@{/sv/dang-ky}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/sv/dang-ky')} ? 'active'">
+                    <i class="bi bi-pencil-square"></i><span>Đăng ký môn học</span></a>
+                <a th:href="@{/sv/ket-qua}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/sv/ket-qua')} ? 'active'">
+                    <i class="bi bi-bar-chart-line"></i><span>Kết quả học tập</span></a>
+            </th:block>
+
+            <th:block sec:authorize="hasRole('GV')">
+                <div class="nav-section">Giảng viên</div>
+                <a th:href="@{/gv}" class="sidebar-link" th:classappend="${currentPath == '/gv'} ? 'active'">
+                    <i class="bi bi-house"></i><span>Trang chủ</span></a>
+                <a th:href="@{/gv/phan-cong}" class="sidebar-link"
+                   th:classappend="${#strings.startsWith(currentPath, '/gv/phan-cong') or #strings.startsWith(currentPath, '/gv/nhap-diem')} ? 'active'">
+                    <i class="bi bi-journal-text"></i><span>Môn được phân công</span></a>
+            </th:block>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a th:href="@{/doi-mat-khau}" class="sidebar-link"
+               th:classappend="${currentPath == '/doi-mat-khau'} ? 'active'">
+                <i class="bi bi-key"></i><span>Đổi mật khẩu</span></a>
+            <form th:action="@{/logout}" method="post" class="m-0">
+                <button type="submit" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span></button>
+            </form>
+        </div>
+    </div>
+</aside>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Trang chủ giảng viên</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Trang chủ</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="page">Giảng viên</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="mb-4">
+        <h2 class="page-heading">
+            Xin chào, <span th:text="${(giangVien.hocVi != null ? giangVien.hocVi + ' ' : '') + giangVien.hoTen}">Tiến sĩ Trần Văn Hùng</span>
+        </h2>
+        <div class="text-muted">
+            Mã GV: <strong th:text="${giangVien.maGV}">GV01</strong>
+            · Khoa: <span th:text="${giangVien.khoa.tenKhoa}"></span>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon blue"><i class="bi bi-journal-text"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soMon}">0</div>
+                    <div class="stat-label">Số môn được phân công (<span th:text="${hocKyHienTai}"></span>)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon green"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soSinhVien}">0</div>
+                    <div class="stat-label">Tổng số sinh viên</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon orange"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soChuaCoDiem}">0</div>
+                    <div class="stat-label">Sinh viên chưa có điểm</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <a th:href="@{/gv/phan-cong}" class="shortcut">
+                <i class="bi bi-journal-text shortcut-icon"></i>
+                <div>
+                    <div class="shortcut-title">Môn được phân công</div>
+                    <div class="text-muted small">Xem danh sách sinh viên và nhập điểm</div>
+                </div>
+                <i class="bi bi-chevron-right ms-auto text-muted"></i>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Quản lý tài khoản</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Quản lý tài khoản</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Tài khoản</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card table-card">
+        <div class="card-body border-bottom">
+            <form class="toolbar" th:action="@{/admin/tai-khoan}" method="get">
+                <div class="toolbar-filters">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" th:value="${q}" class="form-control"
+                               placeholder="Tìm theo tên đăng nhập hoặc họ tên…" aria-label="Tìm kiếm">
+                    </div>
+                    <select name="maQuyen" class="form-select" data-auto-submit aria-label="Lọc theo quyền">
+                        <option value="">Tất cả quyền</option>
+                        <option th:each="qu : ${quyens}" th:value="${qu.maQuyen}" th:text="${qu.tenQuyen}"
+                                th:selected="${qu.maQuyen == maQuyen}"></option>
+                    </select>
+                    <select name="trangThai" class="form-select" data-auto-submit aria-label="Lọc theo trạng thái">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="1" th:selected="${trangThai == '1'}">Hoạt động</option>
+                        <option value="0" th:selected="${trangThai == '0'}">Bị khóa</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                </div>
+                <a th:href="@{/admin/tai-khoan/them}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm mới</a>
+            </form>
+        </div>
+
+        <th:block th:if="${page.totalElements == 0}">
+            <div th:replace="~{fragments/common :: empty(${#strings.isEmpty(q) and #strings.isEmpty(maQuyen) and #strings.isEmpty(trangThai)} ? 'Chưa có dữ liệu' : 'Không tìm thấy tài khoản phù hợp.', '/admin/tai-khoan/them', null)}"></div>
+        </th:block>
+
+        <th:block th:unless="${page.totalElements == 0}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Chủ tài khoản</th>
+                        <th>Quyền</th>
+                        <th>Trạng thái</th>
+                        <th class="col-actions">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="tk, st : ${page.content}"
+                        th:with="laToi=${currentUser != null and currentUser.username == tk.tenDangNhap},
+                                 coChu=${tk.sinhVien != null or tk.giangVien != null}">
+                        <td class="col-stt" th:text="${page.number * page.size + st.count}">1</td>
+                        <td>
+                            <span class="fw-semibold" th:text="${tk.tenDangNhap}"></span>
+                            <span th:if="${laToi}" class="badge badge-soft-navy ms-1">Bạn</span>
+                        </td>
+                        <td>
+                            <th:block th:if="${tk.hoTenChuTaiKhoan != null}">
+                                <span th:text="${tk.hoTenChuTaiKhoan}"></span>
+                                <div class="small text-muted"
+                                     th:text="${tk.sinhVien != null} ? ${tk.sinhVien.maSV} : ${tk.giangVien.maGV}"></div>
+                            </th:block>
+                            <span th:unless="${tk.hoTenChuTaiKhoan != null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${tk.quyen.maQuyen == 'ADMIN'} ? 'badge-soft-purple' : (${tk.quyen.maQuyen == 'GV'} ? 'badge-soft-primary' : 'badge-soft-success')"
+                                  th:text="${tk.quyen.tenQuyen}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${tk.trangThai}" class="badge badge-soft-success">Hoạt động</span>
+                            <span th:unless="${tk.trangThai}" class="badge badge-soft-danger">Bị khóa</span>
+                        </td>
+                        <td class="col-actions">
+                            <!-- Khóa / Mở khóa -->
+                            <span class="d-inline-block" th:if="${laToi}" tabindex="0" data-tooltip
+                                  title="Không thể tự khóa tài khoản của mình">
+                                <button type="button" class="btn btn-sm btn-outline-warning btn-icon" disabled>
+                                    <i class="bi bi-lock"></i></button>
+                            </span>
+                            <button th:unless="${laToi}" type="button" class="btn btn-sm btn-icon" data-tooltip
+                                    th:classappend="${tk.trangThai} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                    th:title="${tk.trangThai} ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
+                                    th:data-confirm-action="@{/admin/tai-khoan/{ten}/khoa(ten=${tk.tenDangNhap})}"
+                                    th:data-confirm-title="${tk.trangThai} ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
+                                    th:data-confirm-message="${tk.trangThai} ? 'Bạn có chắc muốn khóa tài khoản' : 'Bạn có chắc muốn mở khóa tài khoản'"
+                                    th:data-confirm-target="${tk.tenDangNhap}"
+                                    th:data-confirm-button="${tk.trangThai} ? 'Khóa' : 'Mở khóa'"
+                                    th:data-confirm-variant="${tk.trangThai} ? 'warning' : 'primary'">
+                                <i class="bi" th:classappend="${tk.trangThai} ? 'bi-lock' : 'bi-unlock'"></i></button>
+
+                            <!-- Đặt lại mật khẩu -->
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-icon"
+                                    title="Đặt lại mật khẩu về 123456" data-tooltip
+                                    th:data-confirm-action="@{/admin/tai-khoan/{ten}/dat-lai-mat-khau(ten=${tk.tenDangNhap})}"
+                                    data-confirm-title="Đặt lại mật khẩu"
+                                    data-confirm-message="Đặt lại mật khẩu về 123456 cho tài khoản"
+                                    th:data-confirm-target="${tk.tenDangNhap}"
+                                    data-confirm-button="Đặt lại" data-confirm-variant="primary">
+                                <i class="bi bi-key"></i></button>
+
+                            <!-- Xóa: chỉ tài khoản không gắn SV/GV và không phải tài khoản đang đăng nhập -->
+                            <span class="d-inline-block" th:if="${laToi or coChu}" tabindex="0" data-tooltip
+                                  th:title="${laToi} ? 'Không thể xóa tài khoản đang đăng nhập' : 'Tài khoản đang gắn với sinh viên/giảng viên'">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-icon" disabled>
+                                    <i class="bi bi-trash"></i></button>
+                            </span>
+                            <button th:unless="${laToi or coChu}" type="button" class="btn btn-sm btn-outline-danger btn-icon"
+                                    title="Xóa tài khoản" data-tooltip
+                                    th:data-confirm-action="@{/admin/tai-khoan/{ten}/xoa(ten=${tk.tenDangNhap})}"
+                                    data-confirm-message="Bạn có chắc muốn xóa tài khoản"
+                                    th:data-confirm-target="${tk.tenDangNhap}">
+                                <i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:replace="~{fragments/pagination :: pagination(${page})}"></div>
+        </th:block>
+    </div>
+</div>
+</body>
+</html>

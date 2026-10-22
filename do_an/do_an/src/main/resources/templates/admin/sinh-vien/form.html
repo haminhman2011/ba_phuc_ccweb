@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="${form.editMode} ? 'Sửa sinh viên' : 'Thêm sinh viên'">Thêm sinh viên</title>
+</head>
+<body>
+<th:block layout:fragment="page-title"><th:block th:text="${form.editMode} ? 'Sửa sinh viên' : 'Thêm sinh viên'"></th:block></th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item"><a th:href="@{/admin/sinh-vien}">Sinh viên</a></li>
+    <li class="breadcrumb-item active" aria-current="page" th:text="${form.editMode} ? 'Sửa' : 'Thêm mới'">Thêm mới</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card" style="max-width: 900px">
+        <div class="card-header">
+            <h2 class="card-title-sm">
+                <i class="bi bi-person-vcard me-2"></i><span th:text="${form.editMode} ? 'Cập nhật thông tin sinh viên' : 'Thông tin sinh viên mới'"></span>
+            </h2>
+        </div>
+        <form th:action="@{/admin/sinh-vien/luu}" th:object="${form}" method="post" novalidate>
+            <input type="hidden" th:field="*{editMode}">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="maSV" class="form-label required">Mã SV</label>
+                        <input type="text" th:field="*{maSV}" class="form-control" th:errorclass="is-invalid"
+                               maxlength="10" placeholder="VD: SV11" data-uppercase th:readonly="*{editMode}">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('maSV')}" th:errors="*{maSV}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hoTen" class="form-label required">Họ tên</label>
+                        <input type="text" th:field="*{hoTen}" class="form-control" th:errorclass="is-invalid" maxlength="50">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="ngaySinh" class="form-label">Ngày sinh</label>
+                        <input type="date" th:field="*{ngaySinh}" class="form-control" th:errorclass="is-invalid"
+                               th:max="${#temporals.format(#temporals.createToday().minusDays(1), 'yyyy-MM-dd')}">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('ngaySinh')}" th:errors="*{ngaySinh}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="form-label d-block">Giới tính</span>
+                        <div class="pt-1">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" th:field="*{gioiTinh}" value="Nam">
+                                <label class="form-check-label" th:for="${#ids.prev('gioiTinh')}">Nam</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" th:field="*{gioiTinh}" value="Nữ">
+                                <label class="form-check-label" th:for="${#ids.prev('gioiTinh')}">Nữ</label>
+                            </div>
+                        </div>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('gioiTinh')}" th:errors="*{gioiTinh}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="maKhoa" class="form-label required">Khoa</label>
+                        <select th:field="*{maKhoa}" class="form-select" th:errorclass="is-invalid" data-lop-target="#maLop">
+                            <option value="">-- Chọn khoa --</option>
+                            <option th:each="k : ${khoas}" th:value="${k.maKhoa}" th:text="${k.tenKhoa}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('maKhoa')}" th:errors="*{maKhoa}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="maLop" class="form-label required">Lớp</label>
+                        <select th:field="*{maLop}" class="form-select" th:errorclass="is-invalid"
+                                data-placeholder="-- Chọn lớp --">
+                            <option value="">-- Chọn lớp --</option>
+                            <option th:each="l : ${lops}" th:value="${l.maLop()}" th:text="|${l.maLop()} – ${l.tenLop()}|"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('maLop')}" th:errors="*{maLop}"></div>
+                        <div class="form-text">Chọn khoa trước để nạp danh sách lớp.</div>
+                    </div>
+                    <div class="col-12" th:unless="*{editMode}">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{taoTaiKhoan}">
+                            <label class="form-check-label" th:for="${#ids.prev('taoTaiKhoan')}">
+                                Tạo tài khoản đăng nhập
+                                <span class="text-muted small">(tên đăng nhập là mã SV viết thường, mật khẩu 123456)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 py-3">
+                <a th:href="@{/admin/sinh-vien}" class="btn btn-secondary">Hủy</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

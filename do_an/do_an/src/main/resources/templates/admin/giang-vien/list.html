@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Quản lý giảng viên</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Quản lý giảng viên</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Giảng viên</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card table-card">
+        <div class="card-body border-bottom">
+            <form class="toolbar" th:action="@{/admin/giang-vien}" method="get">
+                <div class="toolbar-filters">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" th:value="${q}" class="form-control"
+                               placeholder="Tìm theo mã hoặc tên…" aria-label="Tìm kiếm">
+                    </div>
+                    <select name="maKhoa" class="form-select" data-auto-submit aria-label="Lọc theo khoa">
+                        <option value="">Tất cả khoa</option>
+                        <option th:each="k : ${khoas}" th:value="${k.maKhoa}" th:text="${k.tenKhoa}"
+                                th:selected="${k.maKhoa == maKhoa}"></option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                </div>
+                <a th:href="@{/admin/giang-vien/them}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm mới</a>
+            </form>
+        </div>
+
+        <th:block th:if="${page.totalElements == 0}">
+            <div th:replace="~{fragments/common :: empty(${#strings.isEmpty(q) and #strings.isEmpty(maKhoa)} ? 'Chưa có dữ liệu' : 'Không tìm thấy giảng viên phù hợp.', '/admin/giang-vien/them', null)}"></div>
+        </th:block>
+
+        <th:block th:unless="${page.totalElements == 0}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th>Mã GV</th>
+                        <th>Họ tên</th>
+                        <th>Học vị</th>
+                        <th>Khoa</th>
+                        <th class="text-center">Số môn <span th:text="${hocKyHienTai}"></span></th>
+                        <th>Tài khoản</th>
+                        <th class="col-actions">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="gv, st : ${page.content}">
+                        <td class="col-stt" th:text="${page.number * page.size + st.count}">1</td>
+                        <td class="ma" th:text="${gv.maGV}"></td>
+                        <td class="fw-medium" th:text="${gv.hoTen}"></td>
+                        <td th:text="${gv.hocVi} ?: '—'"></td>
+                        <td th:text="${gv.khoa.tenKhoa}"></td>
+                        <td class="text-center" th:text="${soMonPhanCong[gv.maGV]} ?: 0"></td>
+                        <td>
+                            <span th:if="${coTaiKhoan.contains(gv.maGV)}" class="badge badge-soft-success">
+                                <i class="bi bi-check2 me-1"></i>Đã cấp</span>
+                            <form th:unless="${coTaiKhoan.contains(gv.maGV)}" class="m-0"
+                                  th:action="@{/admin/giang-vien/{ma}/cap-tai-khoan(ma=${gv.maGV})}" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                        title="Tạo tài khoản: tên đăng nhập là mã GV viết thường, mật khẩu 123456"
+                                        data-tooltip>
+                                    <i class="bi bi-person-plus me-1"></i>Cấp tài khoản</button>
+                            </form>
+                        </td>
+                        <td class="col-actions">
+                            <a th:href="@{/admin/giang-vien/{ma}/sua(ma=${gv.maGV})}"
+                               class="btn btn-sm btn-outline-primary btn-icon" title="Sửa giảng viên" data-tooltip>
+                                <i class="bi bi-pencil"></i></a>
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa giảng viên"
+                                    data-tooltip
+                                    th:data-confirm-action="@{/admin/giang-vien/{ma}/xoa(ma=${gv.maGV})}"
+                                    data-confirm-message="Bạn có chắc muốn xóa giảng viên"
+                                    th:data-confirm-target="|${gv.maGV} – ${gv.hoTen}|">
+                                <i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:replace="~{fragments/pagination :: pagination(${page})}"></div>
+        </th:block>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Đổi mật khẩu</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Đổi mật khẩu</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="page">Đổi mật khẩu</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card" style="max-width: 480px">
+        <div class="card-header">
+            <h2 class="card-title-sm"><i class="bi bi-key me-2"></i>Đổi mật khẩu</h2>
+        </div>
+        <form th:action="@{/doi-mat-khau}" th:object="${form}" method="post" novalidate>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="matKhauHienTai" class="form-label required">Mật khẩu hiện tại</label>
+                    <div class="input-group has-validation">
+                        <input type="password" id="matKhauHienTai" name="matKhauHienTai" class="form-control"
+                               th:classappend="${#fields.hasErrors('matKhauHienTai')} ? 'is-invalid'"
+                               autocomplete="current-password">
+                        <button type="button" class="btn btn-outline-secondary" data-toggle-password="#matKhauHienTai"
+                                aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('matKhauHienTai')}"
+                             th:errors="*{matKhauHienTai}"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="matKhauMoi" class="form-label required">Mật khẩu mới</label>
+                    <div class="input-group has-validation">
+                        <input type="password" id="matKhauMoi" name="matKhauMoi" class="form-control"
+                               th:classappend="${#fields.hasErrors('matKhauMoi')} ? 'is-invalid'"
+                               autocomplete="new-password">
+                        <button type="button" class="btn btn-outline-secondary" data-toggle-password="#matKhauMoi"
+                                aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('matKhauMoi')}"
+                             th:errors="*{matKhauMoi}"></div>
+                    </div>
+                    <div class="form-text">Tối thiểu 6 ký tự, khác mật khẩu hiện tại.</div>
+                </div>
+                <div class="mb-1">
+                    <label for="nhapLaiMatKhau" class="form-label required">Nhập lại mật khẩu mới</label>
+                    <div class="input-group has-validation">
+                        <input type="password" id="nhapLaiMatKhau" name="nhapLaiMatKhau" class="form-control"
+                               th:classappend="${#fields.hasErrors('nhapLaiMatKhau')} ? 'is-invalid'"
+                               autocomplete="new-password">
+                        <button type="button" class="btn btn-outline-secondary" data-toggle-password="#nhapLaiMatKhau"
+                                aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('nhapLaiMatKhau')}"
+                             th:errors="*{nhapLaiMatKhau}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 py-3">
+                <a th:href="@{/}" class="btn btn-secondary">Hủy</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

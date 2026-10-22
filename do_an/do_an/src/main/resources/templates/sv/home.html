@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Trang chủ sinh viên</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Trang chủ</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="page">Sinh viên</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="mb-4">
+        <h2 class="page-heading">Xin chào, <span th:text="${sinhVien.hoTen}">Nguyễn Văn An</span></h2>
+        <div class="text-muted">
+            Mã SV: <strong th:text="${sinhVien.maSV}">SV01</strong>
+            · Lớp: <span th:text="${sinhVien.lop.tenLop}"></span>
+            · Khoa: <span th:text="${sinhVien.lop.khoa.tenKhoa}"></span>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soMon}">0</div>
+                    <div class="stat-label">Số môn đã đăng ký (<span th:text="${hocKyHienTai}"></span>)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon orange"><i class="bi bi-stack"></i></div>
+                <div class="flex-grow-1">
+                    <div class="stat-value"><span th:text="${tongTinChi}">0</span><small> / <span th:text="${tinChiToiDa}">24</span></small></div>
+                    <div class="stat-label mb-2">Tổng tín chỉ học kỳ này</div>
+                    <div th:replace="~{fragments/common :: tin-chi-progress(${tongTinChi}, ${tinChiToiDa})}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon green"><i class="bi bi-award"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soMonCoDiem}">0</div>
+                    <div class="stat-label">Số môn đã có điểm</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <a th:href="@{/sv/dang-ky}" class="shortcut">
+                <i class="bi bi-pencil-square shortcut-icon"></i>
+                <div>
+                    <div class="shortcut-title">Đăng ký môn học</div>
+                    <div class="text-muted small">Xem môn được mở, đăng ký hoặc hủy đăng ký</div>
+                </div>
+                <i class="bi bi-chevron-right ms-auto text-muted"></i>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a th:href="@{/sv/ket-qua}" class="shortcut">
+                <i class="bi bi-bar-chart-line shortcut-icon"></i>
+                <div>
+                    <div class="shortcut-title">Xem kết quả học tập</div>
+                    <div class="text-muted small">Điểm từng môn và điểm trung bình</div>
+                </div>
+                <i class="bi bi-chevron-right ms-auto text-muted"></i>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

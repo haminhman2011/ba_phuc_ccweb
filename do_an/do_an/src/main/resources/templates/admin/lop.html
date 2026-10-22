@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Quản lý lớp</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Quản lý lớp</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Lớp</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card table-card">
+        <div class="card-body border-bottom">
+            <form class="toolbar" th:action="@{/admin/lop}" method="get">
+                <div class="toolbar-filters">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" th:value="${q}" class="form-control"
+                               placeholder="Tìm theo mã hoặc tên…" aria-label="Tìm kiếm">
+                    </div>
+                    <select name="maKhoa" class="form-select" data-auto-submit aria-label="Lọc theo khoa">
+                        <option value="">Tất cả khoa</option>
+                        <option th:each="k : ${khoas}" th:value="${k.maKhoa}" th:text="${k.tenKhoa}"
+                                th:selected="${k.maKhoa == maKhoa}"></option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#lopModal"
+                        data-mode="add"><i class="bi bi-plus-lg me-1"></i>Thêm mới</button>
+            </form>
+        </div>
+
+        <th:block th:if="${#lists.isEmpty(lops)}">
+            <div th:replace="~{fragments/common :: empty(${#strings.isEmpty(q) and #strings.isEmpty(maKhoa)} ? 'Chưa có dữ liệu' : 'Không tìm thấy lớp phù hợp.', null, '#lopModal')}"></div>
+        </th:block>
+
+        <div th:unless="${#lists.isEmpty(lops)}" class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th>Mã lớp</th>
+                    <th>Tên lớp</th>
+                    <th>Khóa học</th>
+                    <th>Khoa</th>
+                    <th class="text-center">Sĩ số</th>
+                    <th class="col-actions">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="l, st : ${lops}">
+                    <td class="col-stt" th:text="${st.count}">1</td>
+                    <td class="ma" th:text="${l.maLop}"></td>
+                    <td th:text="${l.tenLop}"></td>
+                    <td th:text="${l.khoaHoc} ?: '—'"></td>
+                    <td th:text="${l.tenKhoa}"></td>
+                    <td class="text-center">
+                        <a th:href="@{/admin/sinh-vien(maKhoa=${l.maKhoa}, maLop=${l.maLop})}"
+                           class="badge badge-soft-primary" title="Xem danh sách sinh viên của lớp" data-tooltip
+                           th:text="${l.siSo}">0</a>
+                    </td>
+                    <td class="col-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-icon" title="Sửa lớp"
+                                data-tooltip data-bs-toggle="modal" data-bs-target="#lopModal" data-mode="edit"
+                                th:data-ma-lop="${l.maLop}" th:data-ten-lop="${l.tenLop}"
+                                th:data-khoa-hoc="${l.khoaHoc}" th:data-ma-khoa="${l.maKhoa}">
+                            <i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa lớp"
+                                data-tooltip
+                                th:data-confirm-action="@{/admin/lop/{ma}/xoa(ma=${l.maLop})}"
+                                data-confirm-message="Bạn có chắc muốn xóa lớp"
+                                th:data-confirm-target="|${l.maLop} – ${l.tenLop}|">
+                            <i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal thêm/sửa lớp -->
+    <div class="modal fade" id="lopModal" tabindex="-1" aria-labelledby="lopModalTitle" aria-hidden="true"
+         data-form-modal data-title-add="Thêm lớp" data-title-edit="Sửa lớp"
+         th:data-open-on-load="${openModal != null}">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/admin/lop/luu}" th:object="${form}" method="post" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="lopModalTitle" th:text="*{editMode} ? 'Sửa lớp' : 'Thêm lớp'">Thêm lớp</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <th:block th:replace="~{fragments/alerts :: modal-error}"></th:block>
+                        <input type="hidden" th:field="*{editMode}">
+                        <div class="row g-3">
+                            <div class="col-sm-5">
+                                <label for="maLop" class="form-label required">Mã lớp</label>
+                                <input type="text" th:field="*{maLop}" class="form-control" th:errorclass="is-invalid"
+                                       maxlength="10" placeholder="VD: CNTT01" data-pk data-uppercase
+                                       th:readonly="*{editMode}">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('maLop')}" th:errors="*{maLop}"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <label for="tenLop" class="form-label required">Tên lớp</label>
+                                <input type="text" th:field="*{tenLop}" class="form-control" th:errorclass="is-invalid"
+                                       maxlength="50">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('tenLop')}" th:errors="*{tenLop}"></div>
+                            </div>
+                            <div class="col-sm-5">
+                                <label for="khoaHoc" class="form-label">Khóa học</label>
+                                <input type="text" th:field="*{khoaHoc}" class="form-control" th:errorclass="is-invalid"
+                                       maxlength="10" placeholder="VD: K2024" data-uppercase>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('khoaHoc')}" th:errors="*{khoaHoc}"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <label for="maKhoa" class="form-label required">Khoa</label>
+                                <select th:field="*{maKhoa}" class="form-select" th:errorclass="is-invalid"
+                                        th:data-default="${maKhoa}">
+                                    <option value="">-- Chọn khoa --</option>
+                                    <option th:each="k : ${khoas}" th:value="${k.maKhoa}" th:text="${k.tenKhoa}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('maKhoa')}" th:errors="*{maKhoa}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

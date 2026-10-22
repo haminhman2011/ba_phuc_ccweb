@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Thêm tài khoản</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Thêm tài khoản</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item"><a th:href="@{/admin/tai-khoan}">Tài khoản</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Thêm mới</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card" style="max-width: 720px">
+        <div class="card-header">
+            <h2 class="card-title-sm"><i class="bi bi-person-plus me-2"></i>Tài khoản mới</h2>
+        </div>
+        <form th:action="@{/admin/tai-khoan/them}" th:object="${form}" method="post" novalidate>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="tenDangNhap" class="form-label required">Tên đăng nhập</label>
+                        <input type="text" th:field="*{tenDangNhap}" class="form-control" th:errorclass="is-invalid"
+                               maxlength="30" autocomplete="off" placeholder="VD: nguyen.van.a">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}"></div>
+                        <div class="form-text">3–30 ký tự: chữ thường không dấu, số, dấu chấm, gạch dưới.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="matKhau" class="form-label required">Mật khẩu</label>
+                        <div class="input-group has-validation">
+                            <input type="password" th:field="*{matKhau}" class="form-control" th:errorclass="is-invalid"
+                                   autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary" data-toggle-password="#matKhau"
+                                    aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nhapLaiMatKhau" class="form-label required">Nhập lại mật khẩu</label>
+                        <div class="input-group has-validation">
+                            <input type="password" th:field="*{nhapLaiMatKhau}" class="form-control"
+                                   th:errorclass="is-invalid" autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary" data-toggle-password="#nhapLaiMatKhau"
+                                    aria-label="Hiện mật khẩu"><i class="bi bi-eye"></i></button>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nhapLaiMatKhau')}"
+                                 th:errors="*{nhapLaiMatKhau}"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <span class="form-label d-block required">Quyền</span>
+                        <div class="pt-1">
+                            <div class="form-check form-check-inline" th:each="qu : ${quyens}">
+                                <input class="form-check-input" type="radio" th:field="*{maQuyen}" th:value="${qu.maQuyen}"
+                                       data-role-radio>
+                                <label class="form-check-label" th:for="${#ids.prev('maQuyen')}" th:text="${qu.tenQuyen}"></label>
+                            </div>
+                        </div>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('maQuyen')}" th:errors="*{maQuyen}"></div>
+                    </div>
+                    <div class="col-12" data-role-show="SV">
+                        <label for="maSV" class="form-label required">Gắn với sinh viên</label>
+                        <select th:field="*{maSV}" class="form-select" th:errorclass="is-invalid">
+                            <option value="">-- Chọn sinh viên chưa có tài khoản --</option>
+                            <option th:each="sv : ${sinhViens}" th:value="${sv.maSV}" th:text="|${sv.maSV} – ${sv.hoTen}|"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('maSV')}" th:errors="*{maSV}"></div>
+                        <div class="form-text" th:if="${#lists.isEmpty(sinhViens)}">Mọi sinh viên đều đã có tài khoản.</div>
+                    </div>
+                    <div class="col-12" data-role-show="GV">
+                        <label for="maGV" class="form-label required">Gắn với giảng viên</label>
+                        <select th:field="*{maGV}" class="form-select" th:errorclass="is-invalid">
+                            <option value="">-- Chọn giảng viên chưa có tài khoản --</option>
+                            <option th:each="gv : ${giangViens}" th:value="${gv.maGV}" th:text="|${gv.maGV} – ${gv.hoTen}|"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('maGV')}" th:errors="*{maGV}"></div>
+                        <div class="form-text" th:if="${#lists.isEmpty(giangViens)}">Mọi giảng viên đều đã có tài khoản.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 py-3">
+                <a th:href="@{/admin/tai-khoan}" class="btn btn-secondary">Hủy</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Quản lý sinh viên</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Quản lý sinh viên</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Sinh viên</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card table-card">
+        <div class="card-body border-bottom">
+            <form class="toolbar" th:action="@{/admin/sinh-vien}" method="get">
+                <div class="toolbar-filters">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" th:value="${q}" class="form-control"
+                               placeholder="Tìm theo mã hoặc tên…" aria-label="Tìm kiếm">
+                    </div>
+                    <select name="maKhoa" class="form-select" data-lop-target="#locLop" data-submit-after
+                            aria-label="Lọc theo khoa">
+                        <option value="">Tất cả khoa</option>
+                        <option th:each="k : ${khoas}" th:value="${k.maKhoa}" th:text="${k.tenKhoa}"
+                                th:selected="${k.maKhoa == maKhoa}"></option>
+                    </select>
+                    <select name="maLop" id="locLop" class="form-select" data-auto-submit data-placeholder="Tất cả lớp"
+                            aria-label="Lọc theo lớp">
+                        <option value="">Tất cả lớp</option>
+                        <option th:each="l : ${lops}" th:value="${l.maLop()}" th:text="|${l.maLop()} – ${l.tenLop()}|"
+                                th:selected="${l.maLop() == maLop}"></option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                </div>
+                <a th:href="@{/admin/sinh-vien/them}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm mới</a>
+            </form>
+        </div>
+
+        <th:block th:if="${page.totalElements == 0}">
+            <div th:replace="~{fragments/common :: empty(${#strings.isEmpty(q) and #strings.isEmpty(maKhoa) and #strings.isEmpty(maLop)} ? 'Chưa có dữ liệu' : 'Không tìm thấy sinh viên phù hợp.', '/admin/sinh-vien/them', null)}"></div>
+        </th:block>
+
+        <th:block th:unless="${page.totalElements == 0}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th>Mã SV</th>
+                        <th>Họ tên</th>
+                        <th>Ngày sinh</th>
+                        <th>Giới tính</th>
+                        <th>Lớp</th>
+                        <th>Tài khoản</th>
+                        <th class="col-actions">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sv, st : ${page.content}">
+                        <td class="col-stt" th:text="${page.number * page.size + st.count}">1</td>
+                        <td class="ma" th:text="${sv.maSV}"></td>
+                        <td class="fw-medium" th:text="${sv.hoTen}"></td>
+                        <td th:text="${sv.ngaySinh != null} ? ${#temporals.format(sv.ngaySinh, 'dd/MM/yyyy')} : '—'"></td>
+                        <td th:text="${sv.gioiTinh} ?: '—'"></td>
+                        <td>
+                            <span th:text="${sv.lop.tenLop}"></span>
+                            <div class="small text-muted" th:text="${sv.lop.khoa.tenKhoa}"></div>
+                        </td>
+                        <td>
+                            <span th:if="${coTaiKhoan.contains(sv.maSV)}" class="badge badge-soft-success">
+                                <i class="bi bi-check2 me-1"></i>Đã cấp</span>
+                            <form th:unless="${coTaiKhoan.contains(sv.maSV)}" class="m-0"
+                                  th:action="@{/admin/sinh-vien/{ma}/cap-tai-khoan(ma=${sv.maSV})}" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                        title="Tạo tài khoản: tên đăng nhập là mã SV viết thường, mật khẩu 123456"
+                                        data-tooltip>
+                                    <i class="bi bi-person-plus me-1"></i>Cấp tài khoản</button>
+                            </form>
+                        </td>
+                        <td class="col-actions">
+                            <a th:href="@{/admin/sinh-vien/{ma}/sua(ma=${sv.maSV})}"
+                               class="btn btn-sm btn-outline-primary btn-icon" title="Sửa sinh viên" data-tooltip>
+                                <i class="bi bi-pencil"></i></a>
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa sinh viên"
+                                    data-tooltip
+                                    th:data-confirm-action="@{/admin/sinh-vien/{ma}/xoa(ma=${sv.maSV})}"
+                                    data-confirm-message="Bạn có chắc muốn xóa sinh viên"
+                                    th:data-confirm-target="|${sv.maSV} – ${sv.hoTen}|">
+                                <i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:replace="~{fragments/pagination :: pagination(${page})}"></div>
+        </th:block>
+    </div>
+</div>
+</body>
+</html>

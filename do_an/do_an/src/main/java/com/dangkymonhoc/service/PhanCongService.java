@@ -1,0 +1,81 @@
+package com.dangkymonhoc.service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.dangkymonhoc.dto.PhanCongForm;
+import com.dangkymonhoc.entity.GiangVien;
+import com.dangkymonhoc.entity.MonHoc;
+import com.dangkymonhoc.entity.PhanCong;
+import com.dangkymonhoc.entity.PhanCongId;
+import com.dangkymonhoc.exception.BusinessException;
+import com.dangkymonhoc.repository.DangKyRepository;
+import com.dangkymonhoc.repository.GiangVienRepository;
+import com.dangkymonhoc.repository.MonHocRepository;
+import com.dangkymonhoc.repository.PhanCongRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class PhanCongService {
+
+    private final PhanCongRepository phanCongRepository;
+    private final DangKyRepository dangKyRepository;
+    private final MonHocRepository monHocRepository;
+    private final GiangVienRepository giangVienRepository;
+    private final HocKyService hocKyService;
+
+    public List<PhanCong> theoHocKy(String hocKy) {
+        return phanCongRepository.findByHocKy(hocKy);
+    }
+
+    /** maMH → số sinh viên đã đăng ký môn trong học kỳ. */
+    public Map<String, Long> soSinhVienTheoMon(String hocKy) {
+        Map<String, Long> result = new HashMap<>();
+        for (Object[] row : dangKyRepository.thongKeTheoMon(hocKy)) {
+            result.put((String) row[0], (Long) row[1]);
+        }
+        return result;
+    }
+
+    /** UC15: mở môn trong học kỳ bằng cách phân công giảng viên. */
+    @Transactional
+    public String them(PhanCongForm form) {
+        String hocKy = form.getHocKy().trim().toUpperCase();
+        if (!hocKyService.hopLe(hocKy)) {
+            throw new BusinessException("Học kỳ phải theo mẫu HK{1|2|3}-{năm}, ví dụ HK1-2026.");
+        }
+        MonHoc mon = monHocRepository.findById(form.getMaMH())
+                .orElseThrow(() -> new BusinessException("Môn học đã chọn không tồn tại."));
+        GiangVien gv = giangVienRepository.findById(form.getMaGV())
+                .orElseThrow(() -> new BusinessException("Giảng viên đã chọn không tồn tại."));
+        PhanCongId id = new PhanCongId(gv.getMaGV(), mon.getMaMH(), hocKy);
+        if (phanCongRepository.existsById(id)) {
+            throw new BusinessException("Giảng viên này đã được phân công môn này trong học kỳ.");
+        }
+        phanCongRepository.save(new PhanCong(id, gv, mon));
+        return "Đã phân công " + gv.getHoTen() + " dạy môn " + mon.getTenMH() + " trong học kỳ " + hocKy + ".";
+    }
+
+    /**
+     * Không cho xóa nếu môn đã có sinh viên đăng ký trong học kỳ và đây là giảng viên duy nhất dạy môn
+     * (xóa sẽ làm môn "đóng" trong khi vẫn còn đăng ký).
+     */
+    @Transactional
+    public void xoa(String maGV, String maMH, String hocKy) {
+        PhanCongId id = new PhanCongId(maGV, maMH, hocKy);
+        PhanCong pc = phanCongRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy phân công cần xóa."));
+        if (dangKyRepository.countByMonHocAndHocKy(maMH, hocKy) > 0
+                && phanCongRepository.countByMonHocAndHocKy(maMH, hocKy) == 1) {
+            throw new BusinessException("Không thể xóa: môn đã có sinh viên đăng ký.");
+        }
+        phanCongRepository.delete(pc);
+    }
+}

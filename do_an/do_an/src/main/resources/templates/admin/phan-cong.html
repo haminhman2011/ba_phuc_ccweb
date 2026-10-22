@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Phân công giảng dạy</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Phân công giảng dạy</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Phân công giảng dạy</li>
+</th:block>
+
+<div layout:fragment="content">
+    <!-- Chọn học kỳ hoặc mở học kỳ mới -->
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap align-items-end gap-3">
+            <form th:action="@{/admin/phan-cong}" method="get">
+                <label for="chonHocKy" class="form-label">Học kỳ</label>
+                <select id="chonHocKy" name="hocKy" class="form-select" data-auto-submit style="min-width: 200px">
+                    <option th:each="hk : ${dsHocKy}" th:value="${hk}"
+                            th:text="${hk == hocKyHienTai} ? |${hk} (hiện tại)| : ${hk}"
+                            th:selected="${hk == hocKy}"></option>
+                </select>
+            </form>
+            <form th:action="@{/admin/phan-cong}" method="get" class="d-flex align-items-end gap-2">
+                <div>
+                    <label for="hocKyMoi" class="form-label">Hoặc nhập học kỳ mới</label>
+                    <input type="text" id="hocKyMoi" name="hocKy" class="form-control" placeholder="VD: HK2-2026"
+                           pattern="HK[123]-\d{4}" title="Theo mẫu HK{1|2|3}-{năm}, ví dụ HK2-2026"
+                           maxlength="10" data-uppercase required style="width: 170px">
+                </div>
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-calendar-plus me-1"></i>Mở</button>
+            </form>
+            <div class="ms-auto text-muted small">
+                Môn có ít nhất một giảng viên được phân công là môn <strong>được mở</strong> trong học kỳ.
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Thêm phân công -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-sm"><i class="bi bi-plus-circle me-2"></i>Thêm phân công</h2>
+                </div>
+                <form th:action="@{/admin/phan-cong/luu}" th:object="${form}" method="post">
+                    <div class="card-body">
+                        <input type="hidden" th:field="*{hocKy}">
+                        <div class="mb-3">
+                            <label class="form-label">Học kỳ</label>
+                            <input type="text" class="form-control" th:value="${hocKy}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="maMH" class="form-label required">Môn học</label>
+                            <select th:field="*{maMH}" class="form-select" required>
+                                <option value="">-- Chọn môn học --</option>
+                                <option th:each="m : ${monHocs}" th:value="${m.maMH}"
+                                        th:text="|${m.maMH} – ${m.tenMH} (${m.soTinChi} TC)|"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="locKhoaGV" class="form-label">Khoa</label>
+                            <select id="locKhoaGV" class="form-select" data-filter-target="#maGV">
+                                <option value="">Tất cả khoa</option>
+                                <option th:each="k : ${khoas}" th:value="${k.maKhoa}" th:text="${k.tenKhoa}"></option>
+                            </select>
+                            <div class="form-text">Lọc danh sách giảng viên theo khoa.</div>
+                        </div>
+                        <div class="mb-1">
+                            <label for="maGV" class="form-label required">Giảng viên</label>
+                            <select th:field="*{maGV}" class="form-select" required>
+                                <option value="">-- Chọn giảng viên --</option>
+                                <option th:each="g : ${giangViens}" th:value="${g.maGV}"
+                                        th:data-khoa="${g.khoa.maKhoa}"
+                                        th:text="|${g.maGV} – ${g.hoTen}|"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white py-3">
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-person-check me-1"></i>Phân công</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danh sách phân công của học kỳ -->
+        <div class="col-lg-8">
+            <div class="card table-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-sm">Phân công học kỳ <span th:text="${hocKy}"></span></h2>
+                    <span class="badge badge-soft-primary"><span th:text="${#lists.size(phanCongs)}">0</span> phân công</span>
+                </div>
+                <th:block th:if="${#lists.isEmpty(phanCongs)}">
+                    <div th:replace="~{fragments/common :: empty-text('Chưa có phân công nào trong học kỳ này.', 'bi-calendar-x')}"></div>
+                </th:block>
+                <div th:unless="${#lists.isEmpty(phanCongs)}" class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                        <tr>
+                            <th class="col-stt">STT</th>
+                            <th>Mã môn</th>
+                            <th>Tên môn</th>
+                            <th class="text-center">Số TC</th>
+                            <th>Giảng viên</th>
+                            <th class="text-center">Số SV đã đăng ký</th>
+                            <th class="col-actions">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="pc, st : ${phanCongs}">
+                            <td class="col-stt" th:text="${st.count}">1</td>
+                            <td class="ma" th:text="${pc.monHoc.maMH}"></td>
+                            <td th:text="${pc.monHoc.tenMH}"></td>
+                            <td class="text-center" th:text="${pc.monHoc.soTinChi}"></td>
+                            <td>
+                                <span th:text="${pc.giangVien.hoTen}"></span>
+                                <div class="small text-muted" th:text="${pc.giangVien.maGV}"></div>
+                            </td>
+                            <td class="text-center" th:text="${soSinhVien[pc.monHoc.maMH]} ?: 0"></td>
+                            <td class="col-actions">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa phân công"
+                                        data-tooltip
+                                        th:data-confirm-action="@{/admin/phan-cong/xoa}"
+                                        data-confirm-message="Bạn có chắc muốn xóa phân công"
+                                        th:data-confirm-target="|${pc.giangVien.hoTen} dạy ${pc.monHoc.maMH} – ${pc.monHoc.tenMH}|"
+                                        th:data-param-ma-g-v="${pc.giangVien.maGV}"
+                                        th:data-param-ma-m-h="${pc.monHoc.maMH}"
+                                        th:data-param-hoc-ky="${hocKy}">
+                                    <i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Kết quả học tập</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Kết quả học tập</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Sinh viên</li>
+    <li class="breadcrumb-item active" aria-current="page">Kết quả học tập</li>
+</th:block>
+
+<div layout:fragment="content">
+    <!-- Tiêu đề chỉ hiện khi in -->
+    <div class="d-none d-print-block mb-3">
+        <h2 class="h4 fw-bold mb-1">KẾT QUẢ HỌC TẬP</h2>
+        <div>
+            Sinh viên: <strong th:text="${sinhVien.hoTen}"></strong> · Mã SV: <span th:text="${sinhVien.maSV}"></span>
+            · Lớp: <span th:text="${sinhVien.lop.tenLop}"></span>
+        </div>
+        <div>Học kỳ: <span th:text="${tatCaHocKy} ? 'Tất cả học kỳ' : ${hocKy}"></span></div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3 no-print">
+        <form th:action="@{/sv/ket-qua}" method="get">
+            <label for="hocKy" class="form-label">Học kỳ</label>
+            <select id="hocKy" name="hocKy" class="form-select" data-auto-submit style="min-width: 200px">
+                <option value="" th:selected="${tatCaHocKy}">Tất cả học kỳ</option>
+                <option th:each="hk : ${dsHocKy}" th:value="${hk}" th:text="${hk}" th:selected="${hk == hocKy}"></option>
+            </select>
+        </form>
+        <button type="button" class="btn btn-outline-secondary" data-print><i class="bi bi-printer me-1"></i>In</button>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-sm-4">
+            <div class="card stat-card">
+                <div class="stat-icon blue"><i class="bi bi-stack"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${tongKet.tongTinChi}">0</div>
+                    <div class="stat-label">Tổng tín chỉ đăng ký</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card stat-card">
+                <div class="stat-icon green"><i class="bi bi-patch-check"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${tongKet.tinChiDat}">0</div>
+                    <div class="stat-label">Tín chỉ đạt</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card stat-card">
+                <div class="stat-icon purple"><i class="bi bi-graph-up-arrow"></i></div>
+                <div>
+                    <div class="stat-value"
+                         th:text="${tongKet.diemTrungBinh != null} ? ${#numbers.formatDecimal(tongKet.diemTrungBinh, 1, 2, 'POINT')} : '—'">—</div>
+                    <div class="stat-label">Điểm trung bình (theo tín chỉ)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card table-card">
+        <th:block th:if="${#lists.isEmpty(nhoms)}">
+            <div th:replace="~{fragments/common :: empty-text(${tatCaHocKy} ? 'Bạn chưa đăng ký môn nào.' : 'Bạn chưa đăng ký môn nào trong học kỳ này.', 'bi-inbox')}"></div>
+        </th:block>
+        <div th:unless="${#lists.isEmpty(nhoms)}" class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th>Học kỳ</th>
+                    <th>Mã môn</th>
+                    <th>Tên môn</th>
+                    <th class="text-center">Số TC</th>
+                    <th class="text-center">Điểm</th>
+                    <th>Kết quả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <th:block th:each="nhom : ${nhoms}">
+                    <tr th:if="${tatCaHocKy}" class="group-row">
+                        <td colspan="7"><i class="bi bi-calendar3 me-2"></i>Học kỳ <span th:text="${nhom.hocKy}"></span></td>
+                    </tr>
+                    <tr th:each="dk, st : ${nhom.dangKys}">
+                        <td class="col-stt" th:text="${st.count}">1</td>
+                        <td th:text="${dk.hocKy}"></td>
+                        <td class="ma" th:text="${dk.monHoc.maMH}"></td>
+                        <td th:text="${dk.monHoc.tenMH}"></td>
+                        <td class="text-center" th:text="${dk.monHoc.soTinChi}"></td>
+                        <td class="text-center fw-semibold">
+                            <th:block th:replace="~{fragments/common :: diem(${dk.diem})}"></th:block>
+                        </td>
+                        <td>
+                            <span th:if="${dk.diem == null}" class="badge badge-soft-secondary">Chưa có điểm</span>
+                            <span th:if="${dk.diem != null and dk.diem >= 5}" class="badge badge-soft-success">Đạt</span>
+                            <span th:if="${dk.diem != null and dk.diem < 5}" class="badge badge-soft-danger">Chưa đạt</span>
+                        </td>
+                    </tr>
+                </th:block>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

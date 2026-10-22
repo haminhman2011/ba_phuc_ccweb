@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Tổng quan</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Tổng quan</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="page">Tổng quan</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card">
+                <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soSinhVien}">0</div>
+                    <div class="stat-label">Sinh viên</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card">
+                <div class="stat-icon green"><i class="bi bi-person-badge"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soGiangVien}">0</div>
+                    <div class="stat-label">Giảng viên</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card">
+                <div class="stat-icon purple"><i class="bi bi-journal-bookmark"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soMonHoc}">0</div>
+                    <div class="stat-label">Môn học · <span th:text="${soMonDuocMo}">0</span> môn đang mở</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card">
+                <div class="stat-icon orange"><i class="bi bi-pencil-square"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${soLuotDangKy}">0</div>
+                    <div class="stat-label">Lượt đăng ký <span th:text="${hocKyHienTai}"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card table-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-sm">Top 5 môn nhiều sinh viên đăng ký nhất</h2>
+                    <span class="badge badge-soft-primary" th:text="${hocKyHienTai}"></span>
+                </div>
+                <th:block th:if="${#lists.isEmpty(topMon)}">
+                    <div th:replace="~{fragments/common :: empty-text('Chưa có lượt đăng ký nào trong học kỳ này.', 'bi-bar-chart')}"></div>
+                </th:block>
+                <div th:unless="${#lists.isEmpty(topMon)}" class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                        <tr>
+                            <th class="col-stt">STT</th>
+                            <th>Mã môn</th>
+                            <th>Tên môn</th>
+                            <th class="text-end">Số SV</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="m, st : ${topMon}">
+                            <td class="col-stt" th:text="${st.count}">1</td>
+                            <td class="ma" th:text="${m.maMH}"></td>
+                            <td th:text="${m.tenMH}"></td>
+                            <td class="text-end fw-semibold" th:text="${m.soSinhVien}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card table-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-sm">Môn được mở nhưng chưa có sinh viên đăng ký</h2>
+                    <a th:href="@{/admin/phan-cong}" class="small">Phân công <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <th:block th:if="${#lists.isEmpty(monChuaCoDangKy)}">
+                    <div th:replace="~{fragments/common :: empty-text('Tất cả môn được mở đều đã có sinh viên đăng ký.', 'bi-check2-circle')}"></div>
+                </th:block>
+                <div th:unless="${#lists.isEmpty(monChuaCoDangKy)}" class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                        <tr>
+                            <th class="col-stt">STT</th>
+                            <th>Mã môn</th>
+                            <th>Tên môn</th>
+                            <th class="text-center">Số TC</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="m, st : ${monChuaCoDangKy}">
+                            <td class="col-stt" th:text="${st.count}">1</td>
+                            <td class="ma" th:text="${m.maMH}"></td>
+                            <td th:text="${m.tenMH}"></td>
+                            <td class="text-center" th:text="${m.soTinChi}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
