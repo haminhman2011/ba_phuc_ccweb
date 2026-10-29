@@ -50,14 +50,16 @@ public class DiemService {
                 .orElseThrow(() -> new BusinessException("Không tìm thấy môn học " + maMH + "."));
     }
 
-    public List<DangKy> danhSachLop(String maMH, String hocKy) {
-        return dangKyRepository.findDanhSachLop(maMH, hocKy);
+    /** Sinh viên đã đăng ký lớp của giảng viên (môn, học kỳ). */
+    public List<DangKy> danhSachLop(String maGV, String maMH, String hocKy) {
+        return dangKyRepository.findDanhSachLop(maGV, maMH, hocKy);
     }
 
     /** Các dòng của bảng nhập điểm; nếu có {@code nhapTay} thì hiển thị lại giá trị người dùng đã gõ. */
-    public List<NhapDiemRow> bangDiem(String maMH, String hocKy, Map<String, String> nhapTay, Set<String> oLoi) {
+    public List<NhapDiemRow> bangDiem(String maGV, String maMH, String hocKy, Map<String, String> nhapTay,
+                                      Set<String> oLoi) {
         List<NhapDiemRow> rows = new ArrayList<>();
-        for (DangKy dk : danhSachLop(maMH, hocKy)) {
+        for (DangKy dk : danhSachLop(maGV, maMH, hocKy)) {
             String maSV = dk.getSinhVien().getMaSV();
             String diem = nhapTay != null && nhapTay.containsKey(maSV)
                     ? nhapTay.get(maSV)
@@ -77,7 +79,7 @@ public class DiemService {
         if (!duocPhanCong(maGV, maMH, hocKy)) {
             throw new BusinessException("Bạn không được phân công dạy môn này.");
         }
-        List<DangKy> ds = danhSachLop(maMH, hocKy);
+        List<DangKy> ds = danhSachLop(maGV, maMH, hocKy);
         Set<String> oLoi = new LinkedHashSet<>();
         Map<String, Float> giaTri = new HashMap<>();
         for (DangKy dk : ds) {
@@ -121,9 +123,12 @@ public class DiemService {
 
     /** UC08: thẻ các môn được phân công kèm sĩ số và tiến độ nhập điểm. */
     public List<PhanCongCard> monDuocPhanCong(String maGV, String hocKy) {
+        // Chỉ tính sinh viên học lớp của giảng viên này
         Map<String, long[]> thongKe = new HashMap<>();
-        for (Object[] row : dangKyRepository.thongKeTheoMon(hocKy)) {
-            thongKe.put((String) row[0], new long[] { (Long) row[1], (Long) row[2] });
+        for (Object[] row : dangKyRepository.thongKeTheoLop(hocKy)) {
+            if (maGV.equals(row[0])) {
+                thongKe.put((String) row[1], new long[] { (Long) row[2], (Long) row[3] });
+            }
         }
         List<PhanCongCard> cards = new ArrayList<>();
         for (PhanCong pc : phanCongRepository.findByGiangVienAndHocKy(maGV, hocKy)) {
@@ -151,10 +156,10 @@ public class DiemService {
     }
 
     /** File CSV UTF-8 có BOM để Excel hiển thị đúng tiếng Việt. */
-    public byte[] xuatCsv(String maMH, String hocKy) {
+    public byte[] xuatCsv(String maGV, String maMH, String hocKy) {
         StringBuilder sb = new StringBuilder("STT,Mã SV,Họ tên,Lớp,Ngày đăng ký,Điểm\r\n");
         int stt = 1;
-        for (DangKy dk : danhSachLop(maMH, hocKy)) {
+        for (DangKy dk : danhSachLop(maGV, maMH, hocKy)) {
             sb.append(stt++).append(',')
               .append(csv(dk.getSinhVien().getMaSV())).append(',')
               .append(csv(dk.getSinhVien().getHoTen())).append(',')

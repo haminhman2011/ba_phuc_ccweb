@@ -310,6 +310,91 @@
         refresh();
     }
 
+    // MH20: modal sửa một buổi học (bấm thẻ trên lưới / nút Sửa) hoặc xếp tay phân công chưa có lịch
+    function initLichModal() {
+        const modalEl = document.getElementById('lichModal');
+        if (!modalEl) {
+            return;
+        }
+        const form = modalEl.querySelector('form');
+        const f = function (name) { return form.elements[name]; };
+        const tietSelect = f('tietBatDau');
+        const xacNhanBox = document.getElementById('xacNhanBox');
+        let viTriGoc = null; // thứ/tiết/tuần/phòng lúc mở modal, để biết người dùng có đổi chỗ không
+
+        // Chỉ hiện tiết bắt đầu hợp lệ: sáng 1–5, chiều 6–10, không vắt qua hai buổi
+        const napTiet = function (soTiet, chon) {
+            tietSelect.innerHTML = '';
+            for (let t = 1; t <= 10; t++) {
+                const ket = t + soTiet - 1;
+                if ((t <= 5 && ket <= 5) || (t >= 6 && ket <= 10)) {
+                    tietSelect.add(new Option('Tiết ' + t + '–' + ket + (t <= 5 ? ' (sáng)' : ' (chiều)'), String(t)));
+                }
+            }
+            if (!tietSelect.options.length) {
+                tietSelect.add(new Option('Không có tiết phù hợp (môn dài hơn 5 tiết)', ''));
+            }
+            if (chon && tietSelect.querySelector('option[value="' + chon + '"]')) {
+                tietSelect.value = chon;
+            }
+        };
+        const hienXacNhan = function () {
+            xacNhanBox.classList.toggle('d-none', f('chinhThuc').value !== 'true');
+        };
+        const ghiNhoViTri = function () {
+            viTriGoc = f('maLich').value
+                ? { thu: f('thu').value, tiet: tietSelect.value, tuan: f('tuanBatDau').value, phong: f('maPhong').value }
+                : null;
+        };
+
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-lich-edit]');
+            if (!btn) {
+                return;
+            }
+            const d = btn.dataset;
+            const sua = !!d.maLich;
+            f('maLich').value = d.maLich || '';
+            f('maGV').value = d.maGV;
+            f('maMH').value = d.maMH;
+            f('soTiet').value = d.soTiet;
+            f('tieuDe').value = d.tieuDe || '';
+            f('chinhThuc').value = d.chinhThuc === 'true' ? 'true' : 'false';
+            f('thu').value = d.thu || '2';
+            napTiet(Number(d.soTiet), d.tiet);
+            f('tuanBatDau').value = d.tuan || '1';
+            f('maPhong').value = d.phong || '';
+            // Xếp tay luôn ghim
+            f('ghim').checked = !sua || d.ghim === 'true';
+            f('xacNhan').checked = false;
+
+            document.getElementById('lichModalTitle').textContent = sua ? 'Sửa buổi học' : 'Xếp tay buổi học';
+            document.getElementById('lichModalSub').textContent = d.tieuDe || '';
+            modalEl.querySelectorAll('.modal-error').forEach(function (el) { el.remove(); });
+            hienXacNhan();
+            ghiNhoViTri();
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+
+        // Sửa tay (đổi thứ, tiết, tuần hoặc phòng) thì tự bật Ghim
+        [f('thu'), tietSelect, f('tuanBatDau'), f('maPhong')].forEach(function (el) {
+            el.addEventListener('change', function () {
+                if (viTriGoc && (f('thu').value !== viTriGoc.thu || tietSelect.value !== viTriGoc.tiet
+                        || f('tuanBatDau').value !== viTriGoc.tuan || f('maPhong').value !== viTriGoc.phong)) {
+                    f('ghim').checked = true;
+                }
+            });
+        });
+
+        // Mở lại sau khi server báo vi phạm: giữ giá trị đã chọn
+        napTiet(Number(f('soTiet').value || 0), tietSelect.dataset.selected);
+        hienXacNhan();
+        ghiNhoViTri();
+        if (modalEl.dataset.openOnLoad === 'true') {
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+    }
+
     function initPrint() {
         document.querySelectorAll('[data-print]').forEach(function (btn) {
             btn.addEventListener('click', function () { window.print(); });
@@ -329,6 +414,7 @@
         initOptionFilter();
         initRoleToggle();
         initDiemForm();
+        initLichModal();
         initPrint();
     });
 })();

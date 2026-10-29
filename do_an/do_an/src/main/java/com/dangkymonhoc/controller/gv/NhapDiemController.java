@@ -43,7 +43,7 @@ public class NhapDiemController {
                         @AuthenticationPrincipal CustomUserDetails user, Model model) {
         String hk = hocKyService.chuanHoa(hocKy);
         kiemTraPhanCong(user, maMH, hk);
-        napTrang(model, maMH, hk, diemService.bangDiem(maMH, hk, null, null));
+        napTrang(model, maMH, hk, diemService.bangDiem(user.getMaGV(), maMH, hk, null, null));
         return "gv/nhap-diem";
     }
 
@@ -59,7 +59,7 @@ public class NhapDiemController {
             // Không lưu gì: hiển thị lại form với giá trị đã nhập và đánh dấu ô sai
             model.addAttribute("errorMessage",
                     "Có " + kq.oLoi().size() + " điểm không hợp lệ, vui lòng kiểm tra lại.");
-            napTrang(model, maMH, hk, diemService.bangDiem(maMH, hk, nhap, kq.oLoi()));
+            napTrang(model, maMH, hk, diemService.bangDiem(user.getMaGV(), maMH, hk, nhap, kq.oLoi()));
             return "gv/nhap-diem";
         }
         ra.addFlashAttribute("successMessage", "Đã lưu điểm cho " + kq.soDaLuu() + " sinh viên.");
@@ -77,7 +77,7 @@ public class NhapDiemController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename(tenFile, StandardCharsets.UTF_8).build().toString())
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(diemService.xuatCsv(maMH, hk));
+                .body(diemService.xuatCsv(user.getMaGV(), maMH, hk));
     }
 
     /** QĐ7: chỉ giảng viên được phân công môn trong học kỳ mới xem/nhập điểm, ngược lại trả 403. */

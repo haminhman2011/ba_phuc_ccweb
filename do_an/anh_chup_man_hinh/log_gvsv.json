@@ -1,0 +1,22 @@
+{
+ "diem_sai": [
+  "Có 1 điểm không hợp lệ, vui lòng kiểm tra lại.",
+  "Có thay đổi chưa lưu",
+  "Điểm phải từ 0 đến 10."
+ ],
+ "gv_hk2": "http://localhost:8080/gv/lich-day?hocKy=HK2-2026&tuan=0",
+ "ktvm_forms": 1,
+ "dk_ktvm": [
+  "Đăng ký môn Kinh tế vi mô thành công."
+ ],
+ "huy_ktvm": [
+  "Đã hủy đăng ký môn Kinh tế vi mô."
+ ],
+ "sv_hk2": [
+  "Học kỳ HK2-2026 chỉ được xem. Chỉ được đăng ký / hủy đăng ký trong học kỳ hiện tại (HK1-2026)."
+ ],
+ "sua_tay_loi": [
+  "GV01 đã dạy CSDL thứ 2 tiết 1–3.",
+  "Lịch học kỳ đã chính thức, sinh viên đã thấy lịch này.\n                                    \n                                        \n                                        \n                                            Tôi xác nhận sửa lịch đã công bố"
+ ]
+}

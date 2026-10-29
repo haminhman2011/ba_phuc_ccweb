@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Lịch dạy</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Lịch dạy</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Giảng viên</li>
+    <li class="breadcrumb-item active" aria-current="page">Lịch dạy</li>
+</th:block>
+
+<div layout:fragment="content">
+    <!-- Tiêu đề chỉ hiện khi in -->
+    <div class="d-none d-print-block mb-3">
+        <h2 class="h4 fw-bold mb-1">LỊCH DẠY HỌC KỲ <span th:text="${hocKy}"></span>
+            <span th:if="${tuan > 0}" th:text="|– TUẦN ${tuan}|"></span></h2>
+        <div>Giảng viên: <strong th:text="${currentUser.hoTen}"></strong> · Mã GV: <span th:text="${currentUser.maGV}"></span></div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3 no-print">
+        <div class="d-flex flex-wrap align-items-end gap-3">
+            <form th:action="@{/gv/lich-day}" method="get">
+                <label for="hocKy" class="form-label">Học kỳ</label>
+                <select id="hocKy" name="hocKy" class="form-select" data-auto-submit style="min-width: 200px">
+                    <option th:each="hk : ${dsHocKy}" th:value="${hk}"
+                            th:text="${hk == hocKyHienTai} ? |${hk} (hiện tại)| : ${hk}"
+                            th:selected="${hk == hocKy}"></option>
+                </select>
+            </form>
+            <th:block th:if="${thongTinHocKy != null and !#lists.isEmpty(tatCa)}">
+                <div th:replace="~{fragments/tkb :: chon-tuan('/gv/lich-day', ${hocKy}, ${thongTinHocKy}, ${tuan})}"></div>
+            </th:block>
+        </div>
+        <button type="button" class="btn btn-outline-secondary" data-print th:disabled="${#lists.isEmpty(tatCa)}">
+            <i class="bi bi-printer me-1"></i>In</button>
+    </div>
+
+    <div class="card">
+        <th:block th:if="${#lists.isEmpty(tatCa)}">
+            <div th:replace="~{fragments/common :: empty-text(${daCongBo} ? 'Bạn không có buổi dạy nào trong lịch chính thức của học kỳ này.' : 'Lịch học kỳ này chưa được công bố.', 'bi-calendar-x')}"></div>
+        </th:block>
+        <div th:unless="${#lists.isEmpty(tatCa)}" class="p-3">
+            <p th:if="${tuan > 0 and #lists.isEmpty(buoi)}" class="text-muted small mb-2">
+                <i class="bi bi-info-circle me-1"></i>Tuần này bạn không có buổi dạy nào.</p>
+            <div th:replace="~{fragments/tkb :: luoi(${buoi}, ${cot}, false, false, ${ngayThu})}"></div>
+        </div>
+    </div>
+
+    <div class="card table-card mt-3" th:unless="${#lists.isEmpty(tatCa)}">
+        <div class="card-header">
+            <h2 class="card-title-sm"><i class="bi bi-list-ul me-2"></i>Các lớp trong học kỳ</h2>
+        </div>
+        <div th:replace="~{fragments/tkb :: danh-sach-lop(${tatCa}, false)}"></div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Lưới tuần: cột Thứ 2–Thứ 7, hàng tiết 1–10 (kèm giờ bắt đầu), vạch ngăn giữa sáng (1–5) và chiều (6–10).
+    buoi    danh sách BuoiHocRow (đã gán lane/soLane bằng LichHocService.chiaCot)
+    cot     thứ → số cột con (kết quả LichHocService.chiaCot), ngày nhiều cột con được nới rộng
+    choSua  true: thẻ là nút mở modal sửa (MH20); false: chỉ đọc (MH21, MH22)
+    hienGV  true: ghi tên giảng viên trên thẻ
+    ngayThu thứ → ngày cụ thể (LichHocService.ngayTrongTuan) để ghi dưới tên thứ; null khi xem cả học kỳ
+  Cần biến gioTiet (GlobalModelAdvice).
+-->
+<div th:fragment="luoi(buoi, cot, choSua, hienGV, ngayThu)" class="tkb-wrap">
+    <div class="tkb">
+        <div class="tkb-head tkb-goc">Tiết</div>
+        <div class="tkb-head" th:each="thu : ${#numbers.sequence(2, 7)}"
+             th:classappend="${ngayThu != null and ngayThu.get(thu) == #temporals.createToday()} ? 'tkb-hom-nay'">
+            <span th:text="|Thứ ${thu}|">Thứ 2</span>
+            <span class="tkb-head-ngay" th:if="${ngayThu != null}"
+                  th:text="${#temporals.format(ngayThu.get(thu), 'dd/MM')}">07/09</span>
+        </div>
+
+        <div class="tkb-tiet-col">
+            <div class="tkb-tiet" th:each="t : ${#numbers.sequence(1, 10)}"
+                 th:classappend="${t == 5} ? 'tkb-het-sang'">
+                <span class="tkb-tiet-so" th:text="${t}">1</span>
+                <span class="tkb-tiet-buoi" th:text="${gioTiet[t - 1]}">07:00</span>
+            </div>
+        </div>
+
+        <div class="tkb-ngay" th:each="thu : ${#numbers.sequence(2, 7)}" th:aria-label="|Thứ ${thu}|"
+             th:style="|--so-cot: ${cot.get(thu) ?: 1}|">
+            <th:block th:each="b : ${buoi}" th:if="${b.thu == thu}">
+                <button th:if="${choSua}" type="button" class="tkb-card" data-lich-edit
+                        th:classappend="|tkb-mau-${b.mau} ${b.xungDot != null ? 'tkb-xung-dot' : ''}|"
+                        th:style="|--tbd: ${b.tietBatDau}; --so-tiet: ${b.soTiet}; --lane: ${b.lane}; --so-lane: ${b.soLane}|"
+                        th:title="|${b.maMH} – ${b.tenMH} · ${b.tenGV} · ${b.moTa} · ${b.thoiGianHoc}${b.xungDot != null ? ' · Xung đột: ' + b.xungDot : ''}|"
+                        th:data-ma-lich="${b.maLich}" th:data-ma-g-v="${b.maGV}" th:data-ma-m-h="${b.maMH}"
+                        th:data-thu="${b.thu}" th:data-tiet="${b.tietBatDau}" th:data-tuan="${b.tuanBatDau}"
+                        th:data-phong="${b.maPhong}"
+                        th:data-ghim="${b.ghim}" th:data-so-tiet="${b.soTiet}" th:data-chinh-thuc="${b.chinhThuc}"
+                        th:data-tieu-de="${b.tieuDe}">
+                    <th:block th:replace="~{fragments/tkb :: noi-dung(${b}, ${hienGV})}"></th:block>
+                </button>
+                <div th:unless="${choSua}" class="tkb-card"
+                     th:classappend="|tkb-mau-${b.mau}|"
+                     th:style="|--tbd: ${b.tietBatDau}; --so-tiet: ${b.soTiet}; --lane: ${b.lane}; --so-lane: ${b.soLane}|"
+                     th:title="|${b.maMH} – ${b.tenMH} · ${b.tenGV} · ${b.moTa} · ${b.thoiGianHoc}|">
+                    <th:block th:replace="~{fragments/tkb :: noi-dung(${b}, ${hienGV})}"></th:block>
+                </div>
+            </th:block>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="noi-dung(b, hienGV)">
+    <span class="tkb-card-ma">
+        <i th:if="${b.xungDot != null}" class="bi bi-exclamation-triangle-fill text-danger"></i>
+        <span th:text="${b.maMH}">CSDL</span>
+        <i th:if="${b.ghim}" class="bi bi-pin-angle-fill ms-auto" aria-label="Đã ghim"></i>
+    </span>
+    <span class="tkb-card-dong" th:unless="${hienGV}" th:text="${b.tenMH}">Cơ sở dữ liệu</span>
+    <span class="tkb-card-dong" th:if="${hienGV}" th:text="${b.tenGV}">Trần Văn Hùng</span>
+    <span class="tkb-card-dong tkb-card-phu" th:text="|P.${b.maPhong} · ${b.khungGio}|">P.A101 · 07:00–09:40</span>
+</th:block>
+
+<!--
+  Bảng các lớp trong học kỳ kèm khoảng ngày học (MH21, MH22).
+    ds      danh sách BuoiHocRow của cả học kỳ
+    hienGV  true: cột giảng viên (lịch sinh viên); false: không cần (lịch giảng viên)
+-->
+<div th:fragment="danh-sach-lop(ds, hienGV)" class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+        <tr>
+            <th class="col-stt">STT</th>
+            <th>Môn</th>
+            <th th:if="${hienGV}">Giảng viên</th>
+            <th>Thứ</th>
+            <th>Tiết</th>
+            <th>Phòng</th>
+            <th>Tuần</th>
+            <th>Thời gian học</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="b, st : ${ds}">
+            <td class="col-stt" th:text="${st.count}">1</td>
+            <td><span class="ma" th:text="${b.maMH}"></span> – <span th:text="${b.tenMH}"></span></td>
+            <td th:if="${hienGV}" th:text="${b.tenGV}"></td>
+            <td th:text="|Thứ ${b.thu}|"></td>
+            <td>
+                <span th:text="${b.tiet}"></span>
+                <div class="small text-muted" th:text="${b.khungGio}"></div>
+            </td>
+            <td th:text="|P.${b.maPhong}|"></td>
+            <td th:text="${b.tuan}"></td>
+            <td th:text="${b.khoangNgay}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!--
+  Thanh chọn tuần cho MH21, MH22.
+    url     đường dẫn trang (/sv/lich-hoc, /gv/lich-day)
+    hocKy   mã học kỳ đang xem
+    hk      HocKy (thời gian học kỳ)
+    tuan    tuần đang xem, 0 = cả học kỳ
+-->
+<div th:fragment="chon-tuan(url, hocKy, hk, tuan)" class="d-flex flex-wrap align-items-center gap-2">
+    <a class="btn btn-outline-secondary btn-icon" th:classappend="${tuan <= 1} ? 'disabled'"
+       th:href="@{${url}(hocKy=${hocKy}, tuan=${tuan - 1})}" title="Tuần trước" aria-label="Tuần trước">
+        <i class="bi bi-chevron-left"></i></a>
+    <form th:action="@{${url}}" method="get" class="m-0">
+        <input type="hidden" name="hocKy" th:value="${hocKy}">
+        <select name="tuan" class="form-select" data-auto-submit aria-label="Chọn tuần" style="min-width: 260px">
+            <option value="0" th:selected="${tuan == 0}">Cả học kỳ (thời khóa biểu chung)</option>
+            <option th:each="t : ${#numbers.sequence(1, hk.soTuan)}" th:value="${t}" th:selected="${t == tuan}"
+                    th:text="|Tuần ${t}: ${#temporals.format(hk.ngayHoc(t, 2), 'dd/MM')} – ${#temporals.format(hk.ngayHoc(t, 2).plusDays(6), 'dd/MM/yyyy')}|"></option>
+        </select>
+    </form>
+    <a class="btn btn-outline-secondary btn-icon" th:classappend="${tuan == 0 or tuan >= hk.soTuan} ? 'disabled'"
+       th:href="@{${url}(hocKy=${hocKy}, tuan=${tuan + 1})}" title="Tuần sau" aria-label="Tuần sau">
+        <i class="bi bi-chevron-right"></i></a>
+</div>
+</body>
+</html>

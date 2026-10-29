@@ -2,6 +2,7 @@ package com.dangkymonhoc.config;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -11,32 +12,40 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dangkymonhoc.common.Quyen;
+import com.dangkymonhoc.common.TietHoc;
 import com.dangkymonhoc.entity.DangKy;
 import com.dangkymonhoc.entity.DangKyId;
 import com.dangkymonhoc.entity.GiangVien;
 import com.dangkymonhoc.entity.Khoa;
+import com.dangkymonhoc.entity.LichHoc;
 import com.dangkymonhoc.entity.Lop;
 import com.dangkymonhoc.entity.MonHoc;
 import com.dangkymonhoc.entity.PhanCong;
 import com.dangkymonhoc.entity.PhanCongId;
-import com.dangkymonhoc.entity.Quyen;
+import com.dangkymonhoc.entity.Phong;
 import com.dangkymonhoc.entity.SinhVien;
 import com.dangkymonhoc.entity.TaiKhoan;
 import com.dangkymonhoc.repository.DangKyRepository;
 import com.dangkymonhoc.repository.GiangVienRepository;
+import com.dangkymonhoc.repository.HocKyRepository;
 import com.dangkymonhoc.repository.KhoaRepository;
+import com.dangkymonhoc.repository.LichHocRepository;
 import com.dangkymonhoc.repository.LopRepository;
 import com.dangkymonhoc.repository.MonHocRepository;
 import com.dangkymonhoc.repository.PhanCongRepository;
-import com.dangkymonhoc.repository.QuyenRepository;
+import com.dangkymonhoc.repository.PhongRepository;
 import com.dangkymonhoc.repository.SinhVienRepository;
 import com.dangkymonhoc.repository.TaiKhoanRepository;
+import com.dangkymonhoc.service.HocKyService;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * Nạp dữ liệu mẫu khi bảng QUYEN còn rỗng (chưa import database/dang_ky_mon_hoc.sql).
+ * Nạp dữ liệu mẫu khi bảng TAI_KHOAN còn rỗng (chưa import database/dang_ky_mon_hoc.sql).
  * Dữ liệu ở đây giống hệt phần INSERT trong file SQL.
+ * Với CSDL tạo từ phiên bản cũ: nạp phòng học nếu bảng PHONG rỗng, khai báo thời gian mặc định cho học kỳ
+ * chưa có trong bảng HOC_KY, gán lớp (cột MaGV) cho đăng ký cũ và gán tuần học cho lịch học cũ.
  */
 @Component
 @RequiredArgsConstructor
@@ -44,7 +53,6 @@ public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
-    private final QuyenRepository quyenRepository;
     private final KhoaRepository khoaRepository;
     private final LopRepository lopRepository;
     private final SinhVienRepository sinhVienRepository;
@@ -53,6 +61,10 @@ public class DataSeeder implements CommandLineRunner {
     private final PhanCongRepository phanCongRepository;
     private final DangKyRepository dangKyRepository;
     private final TaiKhoanRepository taiKhoanRepository;
+    private final PhongRepository phongRepository;
+    private final HocKyRepository hocKyRepository;
+    private final LichHocRepository lichHocRepository;
+    private final HocKyService hocKyService;
     private final PasswordEncoder passwordEncoder;
 
     private final Map<String, Khoa> khoa = new HashMap<>();
@@ -64,14 +76,25 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (quyenRepository.count() > 0) {
-            return;
+        if (taiKhoanRepository.count() == 0) {
+            napDuLieuMau();
         }
+        khaiBaoHocKyThieu();
+        if (phongRepository.count() == 0) {
+            napPhong();
+        }
+        ganLopChoDangKyCu();
+        ganTuanChoLichCu();
+    }
+
+    private void napDuLieuMau() {
         log.info("CSDL trống, đang nạp dữ liệu mẫu...");
 
-        Quyen admin = quyenRepository.save(new Quyen(Quyen.ADMIN, "Quản trị viên"));
-        Quyen quyenGv = quyenRepository.save(new Quyen(Quyen.GV, "Giảng viên"));
-        Quyen quyenSv = quyenRepository.save(new Quyen(Quyen.SV, "Sinh viên"));
+        // Thời gian mặc định (HocKyService.macDinh): HK2-2025 02/02–07/06/2026,
+        // HK1-2026 07/09/2026–10/01/2027, HK2-2026 01/02–06/06/2027
+        hocKyRepository.save(hocKyService.macDinh("HK2-2025"));
+        hocKyRepository.save(hocKyService.macDinh("HK1-2026"));
+        hocKyRepository.save(hocKyService.macDinh("HK2-2026"));
 
         khoa("CNTT", "Công nghệ thông tin");
         khoa("KT", "Kinh tế");
@@ -118,33 +141,94 @@ public class DataSeeder implements CommandLineRunner {
         phanCong("GV02", "MMT", "HK2-2025");
         phanCong("GV03", "KTVM", "HK2-2025");
 
-        // SV01: 2 môn trong học kỳ hiện tại, CSDL đã có điểm (không hủy được - QĐ6)
-        dangKy("SV01", "CSDL", "HK1-2026", "2026-09-05", 8.5f);
-        dangKy("SV01", "LTW", "HK1-2026", "2026-09-05", null);
-        dangKy("SV02", "CSDL", "HK1-2026", "2026-09-06", null);
-        dangKy("SV02", "LTJ", "HK1-2026", "2026-09-06", null);
-        dangKy("SV03", "CSDL", "HK1-2026", "2026-09-06", null);
-        dangKy("SV03", "LTW", "HK1-2026", "2026-09-07", null);
-        dangKy("SV04", "LTW", "HK1-2026", "2026-09-07", null);
-        dangKy("SV05", "LTJ", "HK1-2026", "2026-09-08", null);
-        dangKy("SV08", "KTVM", "HK1-2026", "2026-09-08", null);
-        dangKy("SV08", "NLKT", "HK1-2026", "2026-09-08", null);
-        dangKy("SV09", "NLKT", "HK1-2026", "2026-09-09", null);
-        dangKy("SV01", "CTDL", "HK2-2025", "2026-01-10", 7.5f);
-        dangKy("SV01", "KTVM", "HK2-2025", "2026-01-10", 4.0f);
-        dangKy("SV01", "MMT", "HK2-2025", "2026-01-11", 6.0f);
-        dangKy("SV02", "CTDL", "HK2-2025", "2026-01-12", 9.0f);
-        dangKy("SV08", "KTVM", "HK2-2025", "2026-01-12", 6.5f);
+        // SV01: 2 môn trong học kỳ hiện tại, CSDL đã có điểm (không hủy được - QĐ6).
+        // Môn CSDL có 2 lớp: GV01 và GV02.
+        dangKy("SV01", "CSDL", "GV01", "HK1-2026", "2026-09-05", 8.5f);
+        dangKy("SV01", "LTW", "GV01", "HK1-2026", "2026-09-05", null);
+        dangKy("SV02", "CSDL", "GV02", "HK1-2026", "2026-09-06", null);
+        dangKy("SV02", "LTJ", "GV02", "HK1-2026", "2026-09-06", null);
+        dangKy("SV03", "CSDL", "GV01", "HK1-2026", "2026-09-06", null);
+        dangKy("SV03", "LTW", "GV01", "HK1-2026", "2026-09-07", null);
+        dangKy("SV04", "LTW", "GV01", "HK1-2026", "2026-09-07", null);
+        dangKy("SV05", "LTJ", "GV02", "HK1-2026", "2026-09-08", null);
+        dangKy("SV08", "KTVM", "GV03", "HK1-2026", "2026-09-08", null);
+        dangKy("SV08", "NLKT", "GV04", "HK1-2026", "2026-09-08", null);
+        dangKy("SV09", "NLKT", "GV04", "HK1-2026", "2026-09-09", null);
+        dangKy("SV01", "CTDL", "GV01", "HK2-2025", "2026-01-10", 7.5f);
+        dangKy("SV01", "KTVM", "GV03", "HK2-2025", "2026-01-10", 4.0f);
+        dangKy("SV01", "MMT", "GV02", "HK2-2025", "2026-01-11", 6.0f);
+        dangKy("SV02", "CTDL", "GV01", "HK2-2025", "2026-01-12", 9.0f);
+        dangKy("SV08", "KTVM", "GV03", "HK2-2025", "2026-01-12", 6.5f);
 
-        taiKhoanRepository.save(new TaiKhoan("admin", passwordEncoder.encode("admin123"), true, admin, null, null));
+        taiKhoanRepository.save(new TaiKhoan("admin", passwordEncoder.encode("admin123"), true, Quyen.ADMIN,
+                null, null));
         String macDinh = passwordEncoder.encode("123456");
         gv.values().forEach(g -> taiKhoanRepository.save(
-                new TaiKhoan(g.getMaGV().toLowerCase(), macDinh, true, quyenGv, null, g)));
+                new TaiKhoan(g.getMaGV().toLowerCase(), macDinh, true, Quyen.GV, null, g)));
         // sv10 bị khóa sẵn để thử QĐ9
         sv.values().forEach(s -> taiKhoanRepository.save(
-                new TaiKhoan(s.getMaSV().toLowerCase(), macDinh, !"SV10".equals(s.getMaSV()), quyenSv, s, null)));
+                new TaiKhoan(s.getMaSV().toLowerCase(), macDinh, !"SV10".equals(s.getMaSV()), Quyen.SV, s, null)));
 
         log.info("Đã nạp dữ liệu mẫu: admin/admin123, gv01/123456, sv01/123456.");
+    }
+
+    /** 6 phòng học, sức chứa 40–80. */
+    private void napPhong() {
+        phongRepository.save(new Phong("A101", "Phòng A101", 40));
+        phongRepository.save(new Phong("A102", "Phòng A102", 45));
+        phongRepository.save(new Phong("B201", "Phòng B201", 50));
+        phongRepository.save(new Phong("B202", "Phòng B202", 60));
+        phongRepository.save(new Phong("C301", "Hội trường C301", 70));
+        phongRepository.save(new Phong("C302", "Hội trường C302", 80));
+        log.info("Đã nạp 6 phòng học.");
+    }
+
+    /** Học kỳ đã có phân công nhưng chưa có trong bảng HOC_KY (CSDL cũ): khai báo thời gian mặc định. */
+    private void khaiBaoHocKyThieu() {
+        for (Object[] row : phanCongRepository.countTheoHocKy()) {
+            String hocKy = (String) row[0];
+            if (hocKyService.dungMau(hocKy) && !hocKyRepository.existsById(hocKy)) {
+                hocKyRepository.save(hocKyService.macDinh(hocKy));
+                log.info("Đã khai báo thời gian mặc định cho học kỳ {}.", hocKy);
+            }
+        }
+    }
+
+    /** Lịch học tạo trước khi có cột TuanBatDau/TuanKetThuc: học từ tuần 1, đủ số tuần của môn. */
+    private void ganTuanChoLichCu() {
+        List<LichHoc> ds = lichHocRepository.findChuaCoTuan();
+        for (LichHoc l : ds) {
+            int soTinChi = l.getPhanCong().getMonHoc().getSoTinChi();
+            l.setTuanBatDau(1);
+            l.setTuanKetThuc(TietHoc.soTuanCan(soTinChi, soTinChi));
+        }
+        if (!ds.isEmpty()) {
+            log.info("Đã gán tuần học cho {} buổi học cũ.", ds.size());
+        }
+    }
+
+    /**
+     * Đăng ký tạo trước khi có cột MaGV: gán vào lớp của giảng viên có mã nhỏ nhất dạy môn đó trong học kỳ.
+     * Bỏ qua đăng ký mà môn không có phân công trong học kỳ.
+     */
+    private void ganLopChoDangKyCu() {
+        int dem = 0;
+        for (DangKy dk : dangKyRepository.findChuaCoLop()) {
+            String maGV = null;
+            for (PhanCong pc : phanCongRepository.findByHocKy(dk.getHocKy())) {
+                if (pc.getMonHoc().getMaMH().equals(dk.getId().getMaMH())) {
+                    maGV = pc.getGiangVien().getMaGV();
+                    break;
+                }
+            }
+            if (maGV != null) {
+                dk.setMaGV(maGV);
+                dem++;
+            }
+        }
+        if (dem > 0) {
+            log.info("Đã gán lớp (giảng viên) cho {} đăng ký cũ.", dem);
+        }
     }
 
     private void khoa(String ma, String ten) {
@@ -172,8 +256,8 @@ public class DataSeeder implements CommandLineRunner {
         phanCongRepository.save(new PhanCong(new PhanCongId(maGV, maMH, hocKy), gv.get(maGV), mh.get(maMH)));
     }
 
-    private void dangKy(String maSV, String maMH, String hocKy, String ngay, Float diem) {
-        dangKyRepository.save(new DangKy(new DangKyId(maSV, maMH, hocKy), sv.get(maSV), mh.get(maMH),
+    private void dangKy(String maSV, String maMH, String maGV, String hocKy, String ngay, Float diem) {
+        dangKyRepository.save(new DangKy(new DangKyId(maSV, maMH, hocKy), sv.get(maSV), mh.get(maMH), maGV,
                 LocalDate.parse(ngay), diem));
     }
 }

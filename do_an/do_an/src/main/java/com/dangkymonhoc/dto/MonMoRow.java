@@ -1,5 +1,7 @@
 package com.dangkymonhoc.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,9 +13,9 @@ public class MonMoRow {
     private String tenMH;
     private int soTinChi;
     private String tenKhoa;
-    /** Họ tên các giảng viên được phân công, nối bằng dấu phẩy. */
-    private String giangVien;
     private boolean daDangKy;
     /** Đăng ký thêm môn này sẽ vượt số tín chỉ tối đa. */
     private boolean vuotTinChi;
+    /** Các lớp của môn (mỗi giảng viên được phân công một lớp). */
+    private List<LopHocPhanRow> lops;
 }

@@ -10,35 +10,36 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.dangkymonhoc.common.Quyen;
 import com.dangkymonhoc.entity.TaiKhoan;
 
 public interface TaiKhoanRepository extends JpaRepository<TaiKhoan, String> {
 
     /** Dùng khi đăng nhập và khi cần hiển thị chủ tài khoản. */
     @Query("""
-            select t from TaiKhoan t join fetch t.quyen
+            select t from TaiKhoan t
             left join fetch t.sinhVien left join fetch t.giangVien
             where t.tenDangNhap = :ten""")
     Optional<TaiKhoan> findChiTiet(@Param("ten") String tenDangNhap);
 
     /**
-     * @param maQuyen   chuỗi rỗng = mọi quyền
+     * @param quyen     null = mọi quyền
      * @param trangThai -1 = tất cả, 1 = hoạt động, 0 = bị khóa
      * @param q         chuỗi LIKE đã chuẩn hóa, so với tên đăng nhập và họ tên SV/GV
      */
     @Query(value = """
-            select t from TaiKhoan t join fetch t.quyen qu
+            select t from TaiKhoan t
             left join fetch t.sinhVien s left join fetch t.giangVien g
-            where (:maQuyen = '' or qu.maQuyen = :maQuyen)
+            where (:quyen is null or t.quyen = :quyen)
               and (:trangThai = -1 or (:trangThai = 1 and t.trangThai = true) or (:trangThai = 0 and t.trangThai = false))
               and (lower(t.tenDangNhap) like :q or lower(s.hoTen) like :q or lower(g.hoTen) like :q)""",
            countQuery = """
-            select count(t) from TaiKhoan t join t.quyen qu
+            select count(t) from TaiKhoan t
             left join t.sinhVien s left join t.giangVien g
-            where (:maQuyen = '' or qu.maQuyen = :maQuyen)
+            where (:quyen is null or t.quyen = :quyen)
               and (:trangThai = -1 or (:trangThai = 1 and t.trangThai = true) or (:trangThai = 0 and t.trangThai = false))
               and (lower(t.tenDangNhap) like :q or lower(s.hoTen) like :q or lower(g.hoTen) like :q)""")
-    Page<TaiKhoan> timKiem(@Param("maQuyen") String maQuyen, @Param("trangThai") int trangThai,
+    Page<TaiKhoan> timKiem(@Param("quyen") Quyen quyen, @Param("trangThai") int trangThai,
                            @Param("q") String q, Pageable pageable);
 
     @Query("select t.sinhVien.maSV from TaiKhoan t where t.sinhVien.maSV in :ds")

@@ -12,15 +12,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dangkymonhoc.common.Quyen;
 import com.dangkymonhoc.config.AppProperties;
 import com.dangkymonhoc.dto.TaiKhoanForm;
 import com.dangkymonhoc.entity.GiangVien;
-import com.dangkymonhoc.entity.Quyen;
 import com.dangkymonhoc.entity.SinhVien;
 import com.dangkymonhoc.entity.TaiKhoan;
 import com.dangkymonhoc.exception.BusinessException;
 import com.dangkymonhoc.repository.GiangVienRepository;
-import com.dangkymonhoc.repository.QuyenRepository;
 import com.dangkymonhoc.repository.SinhVienRepository;
 import com.dangkymonhoc.repository.TaiKhoanRepository;
 
@@ -34,7 +33,6 @@ public class TaiKhoanService {
     public static final String MAT_KHAU_MAC_DINH = "123456";
 
     private final TaiKhoanRepository taiKhoanRepository;
-    private final QuyenRepository quyenRepository;
     private final SinhVienRepository sinhVienRepository;
     private final GiangVienRepository giangVienRepository;
     private final PasswordEncoder passwordEncoder;
@@ -45,7 +43,7 @@ public class TaiKhoanService {
         int tt = "1".equals(trangThai) ? 1 : "0".equals(trangThai) ? 0 : -1;
         PageRequest pageable = PageRequest.of(Math.max(page, 0), appProperties.getPageSize(),
                 Sort.by("tenDangNhap"));
-        Page<TaiKhoan> ds = taiKhoanRepository.timKiem(TimKiem.loc(maQuyen), tt, TimKiem.like(q), pageable);
+        Page<TaiKhoan> ds = taiKhoanRepository.timKiem(Quyen.tim(maQuyen), tt, TimKiem.like(q), pageable);
         if (ds.isEmpty() && ds.getTotalPages() > 0 && page >= ds.getTotalPages()) {
             return timKiem(maQuyen, trangThai, q, ds.getTotalPages() - 1);
         }
@@ -53,7 +51,7 @@ public class TaiKhoanService {
     }
 
     public List<Quyen> dsQuyen() {
-        return quyenRepository.findAllSorted();
+        return List.of(Quyen.values());
     }
 
     public List<SinhVien> sinhVienChuaCoTaiKhoan() {
@@ -85,19 +83,21 @@ public class TaiKhoanService {
         if (!form.getMatKhau().equals(form.getNhapLaiMatKhau())) {
             throw new BusinessException("Mật khẩu nhập lại không khớp.");
         }
-        Quyen quyen = quyenRepository.findById(form.getMaQuyen())
-                .orElseThrow(() -> new BusinessException("Quyền không hợp lệ."));
+        Quyen quyen = Quyen.tim(form.getMaQuyen());
+        if (quyen == null) {
+            throw new BusinessException("Quyền không hợp lệ.");
+        }
         TaiKhoan tk = new TaiKhoan(ten, passwordEncoder.encode(form.getMatKhau()), true, quyen, null, null);
 
         // QĐ9: tài khoản SV gắn với đúng một SV, tài khoản GV gắn với đúng một GV
-        if (Quyen.SV.equals(quyen.getMaQuyen())) {
+        if (quyen == Quyen.SV) {
             SinhVien sv = sinhVienRepository.findById(blankToEmpty(form.getMaSV()))
                     .orElseThrow(() -> new BusinessException("Vui lòng chọn sinh viên sở hữu tài khoản."));
             if (taiKhoanRepository.findBySinhVien(sv.getMaSV()).isPresent()) {
                 throw new BusinessException("Sinh viên " + sv.getHoTen() + " đã có tài khoản.");
             }
             tk.setSinhVien(sv);
-        } else if (Quyen.GV.equals(quyen.getMaQuyen())) {
+        } else if (quyen == Quyen.GV) {
             GiangVien gv = giangVienRepository.findById(blankToEmpty(form.getMaGV()))
                     .orElseThrow(() -> new BusinessException("Vui lòng chọn giảng viên sở hữu tài khoản."));
             if (taiKhoanRepository.findByGiangVien(gv.getMaGV()).isPresent()) {
@@ -119,7 +119,7 @@ public class TaiKhoanService {
             throw new BusinessException("Tên đăng nhập " + ten + " đã tồn tại.");
         }
         taiKhoanRepository.save(new TaiKhoan(ten, passwordEncoder.encode(MAT_KHAU_MAC_DINH), true,
-                quyenRepository.getReferenceById(Quyen.SV), sv, null));
+                Quyen.SV, sv, null));
         return ten;
     }
 
@@ -134,7 +134,7 @@ public class TaiKhoanService {
             throw new BusinessException("Tên đăng nhập " + ten + " đã tồn tại.");
         }
         taiKhoanRepository.save(new TaiKhoan(ten, passwordEncoder.encode(MAT_KHAU_MAC_DINH), true,
-                quyenRepository.getReferenceById(Quyen.GV), null, gv));
+                Quyen.GV, null, gv));
         return ten;
     }
 

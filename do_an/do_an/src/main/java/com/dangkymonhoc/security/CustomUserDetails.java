@@ -7,7 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.dangkymonhoc.entity.Quyen;
+import com.dangkymonhoc.common.Quyen;
 import com.dangkymonhoc.entity.TaiKhoan;
 
 import lombok.Getter;
@@ -50,7 +50,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     public boolean isAdmin() {
-        return Quyen.ADMIN.equals(maQuyen);
+        return Quyen.ADMIN.getMaQuyen().equals(maQuyen);
     }
 
     /** Chữ cái đầu của tên (từ cuối trong họ tên) để vẽ avatar. */

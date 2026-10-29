@@ -11,8 +11,11 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 
-    /** Học kỳ đang mở đăng ký, ví dụ HK1-2026. */
-    private String hocKyHienTai = "HK1-2026";
+    /**
+     * Cố định học kỳ hiện tại, ví dụ HK1-2026. Để trống (mặc định) thì học kỳ hiện tại được tính theo ngày hôm nay
+     * và thời gian các học kỳ trong bảng HOC_KY.
+     */
+    private String hocKyHienTai = "";
 
     /** QĐ5: tổng tín chỉ tối đa một sinh viên được đăng ký trong một học kỳ. */
     private int tinChiToiDa = 24;

@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.dangkymonhoc.common.Quyen;
 import com.dangkymonhoc.controller.Redirects;
 import com.dangkymonhoc.dto.TaiKhoanForm;
-import com.dangkymonhoc.entity.Quyen;
 import com.dangkymonhoc.exception.BusinessException;
 import com.dangkymonhoc.security.CustomUserDetails;
 import com.dangkymonhoc.service.TaiKhoanService;
@@ -58,10 +58,11 @@ public class TaiKhoanController {
         if (!result.hasFieldErrors("nhapLaiMatKhau") && !form.getNhapLaiMatKhau().equals(form.getMatKhau())) {
             result.rejectValue("nhapLaiMatKhau", "khongKhop", "Mật khẩu nhập lại không khớp.");
         }
-        if (Quyen.SV.equals(form.getMaQuyen()) && isBlank(form.getMaSV())) {
+        Quyen quyen = Quyen.tim(form.getMaQuyen());
+        if (quyen == Quyen.SV && isBlank(form.getMaSV())) {
             result.rejectValue("maSV", "batBuoc", "Vui lòng chọn sinh viên sở hữu tài khoản.");
         }
-        if (Quyen.GV.equals(form.getMaQuyen()) && isBlank(form.getMaGV())) {
+        if (quyen == Quyen.GV && isBlank(form.getMaGV())) {
             result.rejectValue("maGV", "batBuoc", "Vui lòng chọn giảng viên sở hữu tài khoản.");
         }
         if (!result.hasErrors()) {

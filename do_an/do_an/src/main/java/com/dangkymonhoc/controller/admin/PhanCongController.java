@@ -35,18 +35,16 @@ public class PhanCongController {
 
     @GetMapping
     public String danhSach(@RequestParam(required = false) String hocKy, Model model) {
-        String hk = hocKy == null || hocKy.isBlank() ? hocKyService.hienTai() : hocKy.trim().toUpperCase();
-        if (!hocKyService.hopLe(hk)) {
-            model.addAttribute("errorMessage", "Học kỳ \"" + hocKy + "\" không đúng mẫu HK{1|2|3}-{năm}, ví dụ HK1-2026.");
-            hk = hocKyService.hienTai();
-        }
+        String hk = hocKyService.chuanHoa(hocKy);
         PhanCongForm form = new PhanCongForm();
         form.setHocKy(hk);
         model.addAttribute("form", form);
         model.addAttribute("hocKy", hk);
-        model.addAttribute("dsHocKy", hocKyService.tatCa(hk));
+        model.addAttribute("dsHocKy", hocKyService.tatCa());
+        model.addAttribute("thongTinHocKy", hocKyService.tim(hk).orElse(null));
         model.addAttribute("phanCongs", phanCongService.theoHocKy(hk));
-        model.addAttribute("soSinhVien", phanCongService.soSinhVienTheoMon(hk));
+        model.addAttribute("soSinhVien", phanCongService.soSinhVienTheoLop(hk));
+        model.addAttribute("lich", phanCongService.lichTheoPhanCong(hk));
         model.addAttribute("monHocs", monHocService.tatCa());
         model.addAttribute("khoas", khoaService.tatCa());
         model.addAttribute("giangViens", giangVienService.tatCa());

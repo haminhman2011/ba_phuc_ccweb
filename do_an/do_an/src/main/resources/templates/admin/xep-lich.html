@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Xếp lịch dạy</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Xếp lịch dạy</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Xếp lịch dạy</li>
+</th:block>
+
+<div layout:fragment="content">
+    <!-- Thanh trên: học kỳ, trạng thái, thao tác -->
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap align-items-end gap-3">
+            <form th:action="@{/admin/xep-lich}" method="get">
+                <label for="hocKy" class="form-label">Học kỳ</label>
+                <select id="hocKy" name="hocKy" class="form-select" data-auto-submit style="min-width: 200px">
+                    <option th:each="hk : ${dsHocKy}" th:value="${hk}"
+                            th:text="${hk == hocKyHienTai} ? |${hk} (hiện tại)| : ${hk}"
+                            th:selected="${hk == hocKy}"></option>
+                </select>
+            </form>
+            <div class="pb-1">
+                <span th:if="${bang.trangThai == 'NHAP'}" class="badge badge-soft-warning fs-6">
+                    <i class="bi bi-pencil me-1"></i>Bản nháp</span>
+                <span th:if="${bang.trangThai == 'CHINH_THUC'}" class="badge badge-soft-success fs-6">
+                    <i class="bi bi-check2-circle me-1"></i>Đã chính thức</span>
+                <span th:if="${bang.trangThai == 'TRONG'}" class="badge badge-soft-secondary fs-6">
+                    <i class="bi bi-calendar me-1"></i>Chưa có lịch</span>
+                <span th:unless="${choPhepXep}" class="badge badge-soft-secondary fs-6">
+                    <i class="bi bi-lock me-1"></i>Học kỳ đã qua · chỉ xem</span>
+                <div class="small text-muted mt-1">
+                    <i class="bi bi-calendar-range me-1"></i><span
+                        th:text="|${#temporals.format(thongTinHocKy.ngayBatDau, 'dd/MM/yyyy')} – ${#temporals.format(thongTinHocKy.ngayKetThuc, 'dd/MM/yyyy')} (${thongTinHocKy.soTuan} tuần)|"></span>
+                </div>
+                <div class="small text-muted">
+                    <span th:text="${bang.soPhanCong}">0</span> phân công ·
+                    <span th:text="${#lists.size(bang.buoi)}">0</span> buổi đã xếp ·
+                    <span th:classappend="${bang.soXungDot > 0} ? 'text-danger fw-semibold'"
+                          th:text="|${bang.soXungDot} xung đột|">0 xung đột</span>
+                </div>
+            </div>
+
+            <!-- Học kỳ đã qua: chỉ còn nút xóa bản nháp để dọn lịch nháp sót lại -->
+            <div class="ms-auto d-flex flex-wrap gap-2">
+                <form th:if="${choPhepXep}" th:action="@{/admin/xep-lich/tu-dong}" method="post" class="m-0">
+                    <input type="hidden" name="hocKy" th:value="${hocKy}">
+                    <input type="hidden" name="loc" th:value="${loc}">
+                    <button type="submit" class="btn btn-primary" th:disabled="${bang.soPhanCong == 0}">
+                        <i class="bi bi-magic me-1"></i>Tự động xếp lịch</button>
+                </form>
+                <button type="button" class="btn btn-outline-danger" th:disabled="${bang.soNhap == 0}"
+                        th:data-confirm-action="@{/admin/xep-lich/xoa-nhap}"
+                        data-confirm-title="Xóa bản nháp"
+                        data-confirm-message="Xóa tất cả buổi nháp (kể cả buổi đã ghim) của học kỳ"
+                        th:data-confirm-target="${hocKy}"
+                        data-confirm-button="Xóa bản nháp"
+                        th:data-param-hoc-ky="${hocKy}" th:data-param-loc="${loc}">
+                    <i class="bi bi-eraser me-1"></i>Xóa bản nháp</button>
+                <span th:if="${choPhepXep}" class="d-inline-block" tabindex="0" data-tooltip
+                      th:title="${bang.coTheChinhThuc()} ? 'Sinh viên sẽ thấy lịch và được đăng ký'
+                               : (${bang.soNhap == 0} ? 'Không có buổi nháp nào cần lưu'
+                               : 'Cần xếp đủ mọi phân công và không còn xung đột')">
+                    <button type="button" class="btn btn-success" th:disabled="${!bang.coTheChinhThuc()}"
+                            th:data-confirm-action="@{/admin/xep-lich/chinh-thuc}"
+                            data-confirm-title="Lưu chính thức"
+                            data-confirm-message="Lưu chính thức lịch học kỳ"
+                            th:data-confirm-target="${hocKy}"
+                            data-confirm-button="Lưu chính thức" data-confirm-variant="success"
+                            th:data-param-hoc-ky="${hocKy}" th:data-param-loc="${loc}">
+                        <i class="bi bi-check2-all me-1"></i>Lưu chính thức</button>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chưa xếp được -->
+    <div class="card mb-3 border-warning-subtle" th:unless="${#lists.isEmpty(bang.chuaXep)}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title-sm text-warning-emphasis">
+                <i class="bi bi-exclamation-triangle me-2"></i>Chưa xếp được</h2>
+            <span class="badge badge-soft-warning"><span th:text="${#lists.size(bang.chuaXep)}">0</span> phân công</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th>Môn</th>
+                    <th>Giảng viên</th>
+                    <th class="text-center">Số tiết</th>
+                    <th class="text-center">Sĩ số</th>
+                    <th>Lý do</th>
+                    <th th:if="${choPhepXep}" class="col-actions">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c, st : ${bang.chuaXep}">
+                    <td class="col-stt" th:text="${st.count}">1</td>
+                    <td><span class="ma" th:text="${c.maMH}"></span> – <span th:text="${c.tenMH}"></span></td>
+                    <td th:text="${c.tenGV}"></td>
+                    <td class="text-center" th:text="${c.soTiet}"></td>
+                    <td class="text-center" th:text="${c.siSo}"></td>
+                    <td class="small" th:text="${c.lyDo}"></td>
+                    <td th:if="${choPhepXep}" class="col-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-lich-edit
+                                th:data-ma-g-v="${c.maGV}" th:data-ma-m-h="${c.maMH}"
+                                th:data-so-tiet="${c.soTiet}" th:data-tieu-de="${c.tieuDe}">
+                            <i class="bi bi-hand-index me-1"></i>Xếp tay</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card table-card">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tabLuoi" data-bs-toggle="tab" data-bs-target="#paneLuoi"
+                            type="button" role="tab" aria-controls="paneLuoi" aria-selected="true">
+                        <i class="bi bi-calendar3-week me-1"></i>Lưới tuần</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tabDanhSach" data-bs-toggle="tab" data-bs-target="#paneDanhSach"
+                            type="button" role="tab" aria-controls="paneDanhSach" aria-selected="false">
+                        <i class="bi bi-list-ul me-1"></i>Danh sách
+                        <span class="badge badge-soft-secondary ms-1" th:text="${#lists.size(buoi)}">0</span></button>
+                </li>
+            </ul>
+            <form th:action="@{/admin/xep-lich}" method="get" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="hocKy" th:value="${hocKy}">
+                <label for="loc" class="text-muted small text-nowrap">Xem theo</label>
+                <select id="loc" name="loc" class="form-select form-select-sm" data-auto-submit style="min-width: 220px">
+                    <option value="">Tất cả</option>
+                    <optgroup label="Giảng viên">
+                        <option th:each="g : ${giangViens}" th:value="|GV:${g.maGV}|"
+                                th:text="|${g.maGV} – ${g.hoTen}|" th:selected="${loc == 'GV:' + g.maGV}"></option>
+                    </optgroup>
+                    <optgroup label="Phòng">
+                        <option th:each="p : ${phongs}" th:value="|P:${p.maPhong}|"
+                                th:text="|P.${p.maPhong} (${p.sucChua} chỗ)|" th:selected="${loc == 'P:' + p.maPhong}"></option>
+                    </optgroup>
+                </select>
+            </form>
+        </div>
+
+        <div class="tab-content">
+            <!-- a) Lưới tuần -->
+            <div class="tab-pane fade show active p-3" id="paneLuoi" role="tabpanel" aria-labelledby="tabLuoi">
+                <div class="tkb-chu-thich mb-2" th:unless="${#lists.isEmpty(giangViens)}">
+                    <span th:each="g : ${giangViens}" class="tkb-chip" th:classappend="|tkb-mau-${mauGV[g.maGV]}|"
+                          th:text="${g.hoTen}">GV</span>
+                    <span class="tkb-chip tkb-chip-xung-dot">Xung đột</span>
+                    <span class="text-muted small"><i class="bi bi-pin-angle-fill"></i>
+                        <span th:text="${choPhepXep} ? 'Đã ghim · bấm vào thẻ để sửa' : 'Đã ghim'">Đã ghim</span></span>
+                </div>
+                <p class="text-muted small mb-2">Thời khóa biểu chung, lặp lại mỗi tuần trong khoảng tuần học của
+                    từng lớp (mặc định tuần 1–15: 15 tiết mỗi tín chỉ, mỗi tuần một buổi).</p>
+                <div th:replace="~{fragments/tkb :: luoi(${buoi}, ${cot}, ${choPhepXep}, true, null)}"></div>
+            </div>
+
+            <!-- b) Danh sách -->
+            <div class="tab-pane fade" id="paneDanhSach" role="tabpanel" aria-labelledby="tabDanhSach">
+                <th:block th:if="${#lists.isEmpty(buoi)}"
+                          th:with="thongBao=${choPhepXep} ? 'Chưa có buổi học nào. Bấm Tự động xếp lịch để bắt đầu.' : 'Học kỳ đã qua và không có buổi học nào.'">
+                    <div th:replace="~{fragments/common :: empty-text(${thongBao}, 'bi-calendar-x')}"></div>
+                </th:block>
+                <div th:unless="${#lists.isEmpty(buoi)}" class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                        <tr>
+                            <th class="col-stt">STT</th>
+                            <th>Môn</th>
+                            <th>Giảng viên</th>
+                            <th>Thứ</th>
+                            <th>Tiết</th>
+                            <th>Tuần</th>
+                            <th>Phòng</th>
+                            <th class="text-center">Ghim</th>
+                            <th>Trạng thái</th>
+                            <th th:if="${choPhepXep}" class="col-actions">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="b, st : ${buoi}" th:classappend="${b.xungDot != null} ? 'row-xung-dot'">
+                            <td class="col-stt" th:text="${st.count}">1</td>
+                            <td>
+                                <span class="ma" th:text="${b.maMH}"></span> – <span th:text="${b.tenMH}"></span>
+                                <div th:if="${b.xungDot != null}" class="small text-danger">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${b.xungDot}"></span>
+                                </div>
+                            </td>
+                            <td th:text="${b.tenGV}"></td>
+                            <td th:text="|Thứ ${b.thu}|"></td>
+                            <td>
+                                <span th:text="${b.tiet}"></span>
+                                <div class="small text-muted" th:text="${b.khungGio}"></div>
+                            </td>
+                            <td>
+                                <span th:text="${b.tuan}"></span>
+                                <div class="small text-muted" th:text="${b.khoangNgay}"></div>
+                            </td>
+                            <td>
+                                <span th:text="|P.${b.maPhong}|"></span>
+                                <div class="small text-muted" th:text="|${b.siSo}/${b.sucChua} chỗ|"></div>
+                            </td>
+                            <td class="text-center">
+                                <i th:if="${b.ghim}" class="bi bi-pin-angle-fill text-primary" title="Đã ghim"></i>
+                                <span th:unless="${b.ghim}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${b.chinhThuc}" class="badge badge-soft-success">Chính thức</span>
+                                <span th:unless="${b.chinhThuc}" class="badge badge-soft-warning">Nháp</span>
+                            </td>
+                            <td th:if="${choPhepXep}" class="col-actions">
+                                <button type="button" class="btn btn-sm btn-outline-primary btn-icon" title="Sửa buổi học"
+                                        data-lich-edit
+                                        th:data-ma-lich="${b.maLich}" th:data-ma-g-v="${b.maGV}" th:data-ma-m-h="${b.maMH}"
+                                        th:data-thu="${b.thu}" th:data-tiet="${b.tietBatDau}" th:data-tuan="${b.tuanBatDau}"
+                                        th:data-phong="${b.maPhong}"
+                                        th:data-ghim="${b.ghim}" th:data-so-tiet="${b.soTiet}"
+                                        th:data-chinh-thuc="${b.chinhThuc}" th:data-tieu-de="${b.tieuDe}">
+                                    <i class="bi bi-pencil"></i></button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal sửa buổi / xếp tay -->
+    <div class="modal fade" id="lichModal" tabindex="-1" aria-labelledby="lichModalTitle" aria-hidden="true"
+         th:data-open-on-load="${openModal != null}">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/admin/xep-lich/luu}" th:object="${form}" method="post" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="lichModalTitle"
+                            th:text="*{maLich != null} ? 'Sửa buổi học' : 'Xếp tay buổi học'">Sửa buổi học</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <th:block th:replace="~{fragments/alerts :: modal-error}"></th:block>
+                        <p class="text-muted small mb-3" id="lichModalSub" th:text="*{tieuDe}"></p>
+
+                        <input type="hidden" th:field="*{maLich}">
+                        <input type="hidden" th:field="*{maGV}">
+                        <input type="hidden" th:field="*{maMH}">
+                        <input type="hidden" th:field="*{hocKy}">
+                        <input type="hidden" th:field="*{soTiet}">
+                        <input type="hidden" th:field="*{tieuDe}">
+                        <input type="hidden" th:field="*{chinhThuc}">
+                        <input type="hidden" name="loc" th:value="${loc}">
+
+                        <div class="row g-3">
+                            <div class="col-sm-5">
+                                <label for="thu" class="form-label required">Thứ</label>
+                                <select th:field="*{thu}" class="form-select" required>
+                                    <option th:each="t : ${#numbers.sequence(2, 7)}" th:value="${t}" th:text="|Thứ ${t}|"></option>
+                                </select>
+                            </div>
+                            <div class="col-sm-7">
+                                <label for="tietBatDau" class="form-label required">Tiết bắt đầu</label>
+                                <!-- Option do JS tạo theo số tiết: chỉ hiện tiết bắt đầu không vắt qua hai buổi -->
+                                <select id="tietBatDau" name="tietBatDau" class="form-select" required
+                                        th:data-selected="*{tietBatDau}"></select>
+                            </div>
+                            <div class="col-12">
+                                <label for="tuanBatDau" class="form-label required">Học từ tuần</label>
+                                <select th:field="*{tuanBatDau}" class="form-select" required>
+                                    <option th:each="t : ${#numbers.sequence(1, thongTinHocKy.soTuan)}" th:value="${t}"
+                                            th:text="|Tuần ${t} (thứ 2 ${#temporals.format(thongTinHocKy.ngayHoc(t, 2), 'dd/MM/yyyy')})|"></option>
+                                </select>
+                                <div class="form-text">Lớp học 15 tuần liên tiếp kể từ tuần này; phải kết thúc trước tuần
+                                    <span th:text="${thongTinHocKy.soTuan + 1}">19</span>.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="maPhong" class="form-label required">Phòng</label>
+                                <select th:field="*{maPhong}" class="form-select" required>
+                                    <option value="">-- Chọn phòng --</option>
+                                    <option th:each="p : ${phongs}" th:value="${p.maPhong}"
+                                            th:text="|P.${p.maPhong} · ${p.tenPhong} · ${p.sucChua} chỗ|"></option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" th:field="*{ghim}" class="form-check-input">
+                                    <label class="form-check-label" th:for="${#ids.prev('ghim')}">
+                                        <i class="bi bi-pin-angle me-1"></i>Ghim buổi này</label>
+                                </div>
+                                <div class="form-text">Buổi đã ghim không bị di chuyển khi tự động xếp lại.
+                                    Đổi thứ, tiết, tuần hoặc phòng thì buổi tự được ghim.</div>
+                            </div>
+                        </div>
+
+                        <div id="xacNhanBox" class="alert alert-warning mt-3 mb-0 d-none">
+                            <div class="d-flex gap-2">
+                                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                                <div>
+                                    Lịch học kỳ đã <strong>chính thức</strong>, sinh viên đã thấy lịch này.
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" th:field="*{xacNhan}" class="form-check-input">
+                                        <label class="form-check-label" th:for="${#ids.prev('xacNhan')}">
+                                            Tôi xác nhận sửa lịch đã công bố</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

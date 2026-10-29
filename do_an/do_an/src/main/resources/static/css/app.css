@@ -699,6 +699,220 @@ a {
     border-radius: 0 0 var(--radius-card) var(--radius-card);
 }
 
+/* ---------- Đăng ký theo lớp (MH07) ---------- */
+.lop-hp {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .45rem 0;
+}
+
+.lop-hp + .lop-hp {
+    border-top: 1px dashed var(--border);
+}
+
+/* ---------- Lưới tuần (MH20, MH21, MH22) ---------- */
+.tkb-wrap {
+    overflow-x: auto;
+}
+
+.tkb {
+    --tiet-h: 46px;
+    display: grid;
+    /* Cột ngày rộng ít nhất bằng số cột con × 110px, phần dư chia đều */
+    grid-template-columns: 64px repeat(6, minmax(min-content, 1fr));
+    min-width: 820px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #fff;
+}
+
+.tkb-head {
+    padding: .55rem .5rem;
+    background: var(--table-head);
+    border-bottom: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    text-align: center;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #475569;
+}
+
+.tkb-head.tkb-goc {
+    border-left: 0;
+}
+
+/* Ngày cụ thể dưới tên thứ khi xem theo tuần (MH21, MH22) */
+.tkb-head-ngay {
+    display: block;
+    font-weight: 400;
+    font-size: .72rem;
+    color: var(--muted);
+}
+
+.tkb-head.tkb-hom-nay {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.tkb-head.tkb-hom-nay .tkb-head-ngay {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.tkb-tiet {
+    height: var(--tiet-h);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    line-height: 1.1;
+}
+
+.tkb-tiet:last-child {
+    border-bottom: 0;
+}
+
+.tkb-tiet-so {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Giờ bắt đầu tiết */
+.tkb-tiet-buoi {
+    font-size: .68rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Vạch ngăn giữa buổi sáng (tiết 1–5) và buổi chiều (tiết 6–10) */
+.tkb-tiet.tkb-het-sang {
+    border-bottom: 2px solid #94A3B8;
+}
+
+.tkb-ngay {
+    position: relative;
+    min-width: calc(var(--so-cot, 1) * 110px);
+    height: calc(var(--tiet-h) * 10);
+    border-left: 1px solid var(--border);
+    background-image: repeating-linear-gradient(to bottom,
+        transparent 0, transparent calc(var(--tiet-h) - 1px),
+        var(--border) calc(var(--tiet-h) - 1px), var(--border) var(--tiet-h));
+}
+
+.tkb-ngay::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--tiet-h) * 5 - 1px);
+    border-top: 2px solid #94A3B8;
+    pointer-events: none;
+}
+
+/* Thẻ buổi học trải dọc đúng số tiết; nhiều buổi cùng giờ chia cột con (lane) */
+.tkb-card {
+    position: absolute;
+    z-index: 1;
+    top: calc(var(--tiet-h) * (var(--tbd) - 1) + 2px);
+    height: calc(var(--tiet-h) * var(--so-tiet) - 4px);
+    left: calc(100% * var(--lane) / var(--so-lane) + 3px);
+    width: calc(100% / var(--so-lane) - 6px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: .3rem .45rem;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-left: 4px solid var(--mau);
+    border-radius: 6px;
+    background: var(--mau-nen);
+    color: var(--text);
+    font-size: .78rem;
+    line-height: 1.25;
+    text-align: left;
+}
+
+button.tkb-card {
+    cursor: pointer;
+    transition: box-shadow .15s, transform .15s;
+}
+
+button.tkb-card:hover,
+button.tkb-card:focus-visible {
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .15);
+    transform: translateY(-1px);
+}
+
+.tkb-card-ma {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    font-weight: 700;
+    color: var(--mau);
+}
+
+.tkb-card-dong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tkb-card-phu {
+    color: var(--muted);
+}
+
+.tkb-card.tkb-xung-dot {
+    border: 2px solid #DC3545;
+    border-left-width: 4px;
+}
+
+/* 8 màu theo giảng viên (MH20) hoặc theo môn (MH21, MH22) */
+.tkb-mau-0 { --mau: #2F80ED; --mau-nen: #EAF2FD; }
+.tkb-mau-1 { --mau: #1E9E57; --mau-nen: #E8F7EE; }
+.tkb-mau-2 { --mau: #D97706; --mau-nen: #FFF4E5; }
+.tkb-mau-3 { --mau: #7C4DDB; --mau-nen: #F1ECFD; }
+.tkb-mau-4 { --mau: #0E9AA7; --mau-nen: #E6F6F7; }
+.tkb-mau-5 { --mau: #D63384; --mau-nen: #FDEBF3; }
+.tkb-mau-6 { --mau: #1F3F60; --mau-nen: #E7EDF4; }
+.tkb-mau-7 { --mau: #6B7F1A; --mau-nen: #F3F6E4; }
+
+.tkb-chu-thich {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem .5rem;
+}
+
+.tkb-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .15rem .55rem;
+    border-left: 4px solid var(--mau);
+    border-radius: 6px;
+    background: var(--mau-nen);
+    font-size: .8rem;
+}
+
+.tkb-chip-xung-dot {
+    border: 2px solid #DC3545;
+    background: #fff;
+}
+
+.table tr.row-xung-dot > * {
+    --bs-table-bg: #FFF5F5;
+}
+
+.confirm-icon.success {
+    background: #E8F7EE;
+    color: #1E9E57;
+}
+
 /* ---------- Đăng nhập ---------- */
 .auth-hero {
     position: relative;
@@ -798,5 +1012,25 @@ a {
 
     .table > thead > tr > th {
         background: #fff !important;
+    }
+
+    /* Lưới tuần in vừa khổ giấy, giữ màu thẻ */
+    .tkb-wrap {
+        overflow: visible;
+    }
+
+    .tkb {
+        min-width: 0;
+        grid-template-columns: 48px repeat(6, 1fr);
+    }
+
+    .tkb-ngay {
+        min-width: 0;
+    }
+
+    .tkb-card,
+    .tkb-head {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

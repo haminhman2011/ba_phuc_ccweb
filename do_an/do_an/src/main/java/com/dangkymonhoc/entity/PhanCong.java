@@ -35,6 +35,15 @@ public class PhanCong {
     @JoinColumn(name = "MaMH", foreignKey = @ForeignKey(name = "FK_PC_MH"))
     private MonHoc monHoc;
 
+    /** Chỉ để tạo khóa ngoại FK_PC_HK; giá trị học kỳ ghi qua id.hocKy. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "HocKy", insertable = false, updatable = false, foreignKey = @ForeignKey(name = "FK_PC_HK"))
+    private HocKy thongTinHocKy;
+
+    public PhanCong(PhanCongId id, GiangVien giangVien, MonHoc monHoc) {
+        this(id, giangVien, monHoc, null);
+    }
+
     public String getHocKy() {
         return id.getHocKy();
     }

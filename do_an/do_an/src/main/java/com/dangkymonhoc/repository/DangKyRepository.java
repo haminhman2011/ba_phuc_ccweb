@@ -29,7 +29,7 @@ public interface DangKyRepository extends JpaRepository<DangKy, DangKyId> {
                                  @Param("hocKy") String hocKy);
 
     @Query("""
-            select d from DangKy d join fetch d.monHoc m
+            select d from DangKy d join fetch d.monHoc m left join fetch d.phanCong p left join fetch p.giangVien
             where d.id.maSV = :maSV and d.id.hocKy = :hocKy
             order by m.maMH""")
     List<DangKy> findBySinhVienAndHocKy(@Param("maSV") String maSV, @Param("hocKy") String hocKy);
@@ -68,30 +68,41 @@ public interface DangKyRepository extends JpaRepository<DangKy, DangKyId> {
             order by count(d) desc, m.maMH""")
     List<TopMonRow> topMon(@Param("hocKy") String hocKy, Pageable pageable);
 
-    /** Mỗi phần tử: [maMH, số SV đăng ký, số SV đã có điểm]. */
+    /** Mỗi phần tử: [maGV, maMH, số SV đăng ký, số SV đã có điểm] của từng lớp trong học kỳ. */
     @Query("""
-            select d.id.maMH, count(d), count(d.diem) from DangKy d
-            where d.id.hocKy = :hocKy
-            group by d.id.maMH""")
-    List<Object[]> thongKeTheoMon(@Param("hocKy") String hocKy);
+            select d.maGV, d.id.maMH, count(d), count(d.diem) from DangKy d
+            where d.id.hocKy = :hocKy and d.maGV is not null
+            group by d.maGV, d.id.maMH""")
+    List<Object[]> thongKeTheoLop(@Param("hocKy") String hocKy);
+
+    /** Mỗi phần tử: [maGV, maMH, maSV], dùng để kiểm tra sinh viên học cả hai lớp khi xếp lịch. */
+    @Query("select d.maGV, d.id.maMH, d.id.maSV from DangKy d where d.id.hocKy = :hocKy and d.maGV is not null")
+    List<Object[]> findSinhVienTheoLop(@Param("hocKy") String hocKy);
+
+    /** Sĩ số lớp: số sinh viên đã đăng ký môn với giảng viên này trong học kỳ. */
+    @Query("select count(d) from DangKy d where d.maGV = :maGV and d.id.maMH = :maMH and d.id.hocKy = :hocKy")
+    long countByLop(@Param("maGV") String maGV, @Param("maMH") String maMH, @Param("hocKy") String hocKy);
+
+    /** Đăng ký tạo trước khi có cột MaGV (CSDL cũ), cần gán lớp. */
+    @Query("select d from DangKy d where d.maGV is null")
+    List<DangKy> findChuaCoLop();
 
     // ----- Phía giảng viên -----
 
     @Query("""
             select d from DangKy d join fetch d.sinhVien s join fetch s.lop
-            where d.id.maMH = :maMH and d.id.hocKy = :hocKy
+            where d.maGV = :maGV and d.id.maMH = :maMH and d.id.hocKy = :hocKy
             order by s.maSV""")
-    List<DangKy> findDanhSachLop(@Param("maMH") String maMH, @Param("hocKy") String hocKy);
+    List<DangKy> findDanhSachLop(@Param("maGV") String maGV, @Param("maMH") String maMH,
+                                 @Param("hocKy") String hocKy);
 
     @Query("""
             select count(d) from DangKy d
-            where d.id.hocKy = :hocKy and d.id.maMH in
-                (select p.id.maMH from PhanCong p where p.id.maGV = :maGV and p.id.hocKy = :hocKy)""")
+            where d.id.hocKy = :hocKy and d.maGV = :maGV""")
     long countSinhVienCuaGiangVien(@Param("maGV") String maGV, @Param("hocKy") String hocKy);
 
     @Query("""
             select count(d) from DangKy d
-            where d.id.hocKy = :hocKy and d.diem is null and d.id.maMH in
-                (select p.id.maMH from PhanCong p where p.id.maGV = :maGV and p.id.hocKy = :hocKy)""")
+            where d.id.hocKy = :hocKy and d.maGV = :maGV and d.diem is null""")
     long countChuaCoDiemCuaGiangVien(@Param("maGV") String maGV, @Param("hocKy") String hocKy);
 }

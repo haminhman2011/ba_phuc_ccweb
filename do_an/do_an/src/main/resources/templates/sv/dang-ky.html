@@ -32,6 +32,20 @@
         </div>
     </div>
 
+    <!-- Học kỳ cũ: chỉ xem -->
+    <div th:unless="${choPhepThaoTac}" class="alert alert-info d-flex align-items-start gap-2" role="status">
+        <i class="bi bi-info-circle-fill mt-1"></i>
+        <div>Học kỳ <strong th:text="${hocKy}"></strong> chỉ được xem. Chỉ được đăng ký / hủy đăng ký trong học kỳ
+            hiện tại (<strong th:text="${hocKyHienTai}"></strong>).</div>
+    </div>
+
+    <!-- Lịch học kỳ chưa công bố: chưa đăng ký được -->
+    <div th:if="${choPhepThaoTac and !lichCongBo}" class="alert alert-warning d-flex align-items-start gap-2" role="status">
+        <i class="bi bi-calendar-x mt-1"></i>
+        <div>Lịch học kỳ <strong th:text="${hocKy}"></strong> chưa được công bố. Bạn sẽ đăng ký được khi phòng đào
+            tạo lưu lịch chính thức.</div>
+    </div>
+
     <!-- Khối 1: môn được mở -->
     <div class="card table-card mb-4">
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -56,8 +70,7 @@
                     <th>Tên môn</th>
                     <th class="text-center">Số TC</th>
                     <th>Khoa phụ trách</th>
-                    <th>Giảng viên</th>
-                    <th class="col-actions">Thao tác</th>
+                    <th style="min-width: 380px">Lớp học phần (giảng viên · lịch học · sĩ số)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -67,20 +80,40 @@
                     <td class="fw-medium" th:text="${m.tenMH}"></td>
                     <td class="text-center" th:text="${m.soTinChi}"></td>
                     <td th:text="${m.tenKhoa}"></td>
-                    <td class="small" th:text="${m.giangVien}"></td>
-                    <td class="col-actions">
-                        <span th:if="${m.daDangKy}" class="badge bg-success"><i class="bi bi-check2 me-1"></i>Đã đăng ký</span>
-                        <span th:if="${!m.daDangKy and m.vuotTinChi}" class="d-inline-block" tabindex="0" data-tooltip
-                              title="Vượt quá số tín chỉ tối đa">
-                            <button type="button" class="btn btn-sm btn-primary" disabled>
-                                <i class="bi bi-plus-circle me-1"></i>Đăng ký</button>
-                        </span>
-                        <form th:if="${!m.daDangKy and !m.vuotTinChi}" th:action="@{/sv/dang-ky}" method="post" class="d-inline">
-                            <input type="hidden" name="maMH" th:value="${m.maMH}">
-                            <input type="hidden" name="hocKy" th:value="${hocKy}">
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-plus-circle me-1"></i>Đăng ký</button>
-                        </form>
+                    <td>
+                        <div class="lop-hp" th:each="lop : ${m.lops}">
+                            <div class="flex-grow-1">
+                                <div class="fw-medium" th:text="${lop.tenGV}">Trần Văn Hùng</div>
+                                <div class="small text-muted">
+                                    <th:block th:if="${lop.coLich}">
+                                        <i class="bi bi-clock me-1"></i><span th:text="${lop.lich}"></span>
+                                        · <span th:text="|${lop.siSo}/${lop.sucChua} SV|"></span>
+                                    </th:block>
+                                    <span th:unless="${lop.coLich}">Chưa có lịch học</span>
+                                </div>
+                            </div>
+                            <div class="text-nowrap">
+                                <span th:if="${lop.daDangKy}" class="badge bg-success"><i class="bi bi-check2 me-1"></i>Đã đăng ký</span>
+                                <th:block th:if="${!m.daDangKy and choPhepThaoTac and lop.coLich}">
+                                    <!-- Không đăng ký được: nút vô hiệu hóa kèm lý do (service vẫn kiểm tra lại khi nhận POST) -->
+                                    <span th:if="${m.vuotTinChi or lop.trungLich != null or lop.day}"
+                                          class="d-inline-block" tabindex="0" data-tooltip
+                                          th:title="${m.vuotTinChi} ? 'Vượt quá số tín chỉ tối đa'
+                                                   : (${lop.trungLich != null} ? ${lop.trungLich} : 'Lớp đã đủ chỗ')">
+                                        <button type="button" class="btn btn-sm btn-primary" disabled>
+                                            <i class="bi bi-plus-circle me-1"></i>Đăng ký</button>
+                                    </span>
+                                    <form th:unless="${m.vuotTinChi or lop.trungLich != null or lop.day}"
+                                          th:action="@{/sv/dang-ky}" method="post" class="d-inline">
+                                        <input type="hidden" name="maMH" th:value="${m.maMH}">
+                                        <input type="hidden" name="maGV" th:value="${lop.maGV}">
+                                        <input type="hidden" name="hocKy" th:value="${hocKy}">
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle me-1"></i>Đăng ký</button>
+                                    </form>
+                                </th:block>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -109,6 +142,8 @@
                     <th>Mã môn</th>
                     <th>Tên môn</th>
                     <th class="text-center">Số TC</th>
+                    <th>Giảng viên</th>
+                    <th>Lịch học</th>
                     <th>Ngày đăng ký</th>
                     <th class="text-center">Điểm</th>
                     <th class="col-actions">Thao tác</th>
@@ -120,6 +155,8 @@
                     <td class="ma" th:text="${dk.monHoc.maMH}"></td>
                     <td class="fw-medium" th:text="${dk.monHoc.tenMH}"></td>
                     <td class="text-center" th:text="${dk.monHoc.soTinChi}"></td>
+                    <td th:text="${dk.phanCong?.giangVien?.hoTen} ?: '—'"></td>
+                    <td class="small" th:text="${lichDaDangKy[dk.monHoc.maMH]} ?: 'Chưa có lịch'"></td>
                     <td th:text="${dk.ngayDangKy != null} ? ${#temporals.format(dk.ngayDangKy, 'dd/MM/yyyy')} : '—'"></td>
                     <td class="text-center fw-semibold">
                         <th:block th:replace="~{fragments/common :: diem(${dk.diem})}"></th:block>
@@ -127,7 +164,8 @@
                     <td class="col-actions">
                         <span th:if="${dk.diem != null}" class="badge badge-soft-secondary" data-tooltip
                               title="Môn đã có điểm, không thể hủy">Đã có điểm</span>
-                        <button th:unless="${dk.diem != null}" type="button" class="btn btn-sm btn-outline-danger"
+                        <span th:if="${dk.diem == null and !choPhepThaoTac}" class="text-muted">—</span>
+                        <button th:if="${dk.diem == null and choPhepThaoTac}" type="button" class="btn btn-sm btn-outline-danger"
                                 th:data-confirm-action="@{/sv/dang-ky/huy}"
                                 data-confirm-title="Hủy đăng ký"
                                 data-confirm-message="Hủy đăng ký môn"
@@ -143,7 +181,7 @@
                 <tr>
                     <td colspan="3" class="text-end fw-bold">Tổng cộng:</td>
                     <td class="text-center fw-bold" th:text="${tongTinChi}">0</td>
-                    <td colspan="3" class="fw-bold">tín chỉ</td>
+                    <td colspan="5" class="fw-bold">tín chỉ</td>
                 </tr>
                 </tfoot>
             </table>

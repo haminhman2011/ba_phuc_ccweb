@@ -1,5 +1,6 @@
 package com.dangkymonhoc.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.core.Authentication;
@@ -8,8 +9,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.util.UriUtils;
 
+import com.dangkymonhoc.common.TietHoc;
 import com.dangkymonhoc.config.AppProperties;
+import com.dangkymonhoc.entity.HocKy;
 import com.dangkymonhoc.security.CustomUserDetails;
+import com.dangkymonhoc.service.HocKyService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +24,23 @@ import lombok.RequiredArgsConstructor;
 public class GlobalModelAdvice {
 
     private final AppProperties appProperties;
+    private final HocKyService hocKyService;
 
     @ModelAttribute("hocKyHienTai")
     public String hocKyHienTai() {
-        return appProperties.getHocKyHienTai();
+        return hocKyService.hienTai();
+    }
+
+    /** Thời gian học kỳ hiện tại cho badge trên header, null nếu học kỳ chưa được khai báo. */
+    @ModelAttribute("thongTinHocKyHienTai")
+    public HocKy thongTinHocKyHienTai() {
+        return hocKyService.tim(hocKyService.hienTai()).orElse(null);
+    }
+
+    /** Giờ bắt đầu tiết 1–10 ("07:00"...), ghi ở cột tiết của lưới tuần. */
+    @ModelAttribute("gioTiet")
+    public List<String> gioTiet() {
+        return TietHoc.dsGioBatDau();
     }
 
     @ModelAttribute("tinChiToiDa")

@@ -10,7 +10,11 @@ public final class Redirects {
     private Redirects() {
     }
 
-    /** Quay về trang trong header Referer nếu cùng host, ngược lại về {@code fallback}. */
+    /**
+     * Quay về trang trong header Referer nếu cùng host, ngược lại về {@code fallback}.
+     * Referer ".../luu" là trang hiển thị lại sau khi lưu bị lỗi (URL chỉ nhận POST): quay về {@code fallback}
+     * để tránh GET vào URL đó.
+     */
     public static String back(HttpServletRequest request, String fallback) {
         String referer = request.getHeader("Referer");
         if (referer != null) {
@@ -19,7 +23,7 @@ public final class Redirects {
                 String ctx = request.getContextPath();
                 String path = uri.getRawPath();
                 boolean cungHost = uri.getHost() == null || uri.getHost().equalsIgnoreCase(request.getServerName());
-                if (cungHost && path != null && path.startsWith(ctx + "/")) {
+                if (cungHost && path != null && path.startsWith(ctx + "/") && !path.endsWith("/luu")) {
                     String query = uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery();
                     return "redirect:" + path.substring(ctx.length()) + query;
                 }

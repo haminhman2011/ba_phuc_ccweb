@@ -11,8 +11,12 @@
     <h1 class="page-title"><th:block layout:fragment="page-title">Trang chủ</th:block></h1>
 
     <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
-        <span class="hoc-ky-badge d-none d-sm-inline-flex">
+        <span class="hoc-ky-badge d-none d-sm-inline-flex"
+              th:title="${thongTinHocKyHienTai != null} ? |${#temporals.format(thongTinHocKyHienTai.ngayBatDau, 'dd/MM/yyyy')} – ${#temporals.format(thongTinHocKyHienTai.ngayKetThuc, 'dd/MM/yyyy')}|">
             <i class="bi bi-calendar3"></i>Học kỳ: <strong th:text="${hocKyHienTai}">HK1-2026</strong>
+            <span th:if="${thongTinHocKyHienTai != null and thongTinHocKyHienTai.dangDienRa(#temporals.createToday())}"
+                  class="d-none d-xl-inline"
+                  th:text="|· tuần ${thongTinHocKyHienTai.tuanCua(#temporals.createToday())}/${thongTinHocKyHienTai.soTuan}|"></span>
         </span>
 
         <div class="dropdown" th:if="${currentUser != null}">

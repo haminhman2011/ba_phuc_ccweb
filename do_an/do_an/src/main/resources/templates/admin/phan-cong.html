@@ -13,7 +13,7 @@
 </th:block>
 
 <div layout:fragment="content">
-    <!-- Chọn học kỳ hoặc mở học kỳ mới -->
+    <!-- Chọn học kỳ (học kỳ mới thêm ở mục Học kỳ) -->
     <div class="card mb-3">
         <div class="card-body d-flex flex-wrap align-items-end gap-3">
             <form th:action="@{/admin/phan-cong}" method="get">
@@ -24,15 +24,13 @@
                             th:selected="${hk == hocKy}"></option>
                 </select>
             </form>
-            <form th:action="@{/admin/phan-cong}" method="get" class="d-flex align-items-end gap-2">
-                <div>
-                    <label for="hocKyMoi" class="form-label">Hoặc nhập học kỳ mới</label>
-                    <input type="text" id="hocKyMoi" name="hocKy" class="form-control" placeholder="VD: HK2-2026"
-                           pattern="HK[123]-\d{4}" title="Theo mẫu HK{1|2|3}-{năm}, ví dụ HK2-2026"
-                           maxlength="10" data-uppercase required style="width: 170px">
+            <div class="pb-1 small">
+                <div th:if="${thongTinHocKy != null}" class="text-muted">
+                    <i class="bi bi-calendar-range me-1"></i>
+                    <span th:text="|${#temporals.format(thongTinHocKy.ngayBatDau, 'dd/MM/yyyy')} – ${#temporals.format(thongTinHocKy.ngayKetThuc, 'dd/MM/yyyy')} · ${thongTinHocKy.soTuan} tuần|"></span>
                 </div>
-                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-calendar-plus me-1"></i>Mở</button>
-            </form>
+                <a th:href="@{/admin/hoc-ky}"><i class="bi bi-calendar-plus me-1"></i>Thêm học kỳ mới</a>
+            </div>
             <div class="ms-auto text-muted small">
                 Môn có ít nhất một giảng viên được phân công là môn <strong>được mở</strong> trong học kỳ.
             </div>
@@ -105,12 +103,14 @@
                             <th>Tên môn</th>
                             <th class="text-center">Số TC</th>
                             <th>Giảng viên</th>
+                            <th>Lịch học</th>
                             <th class="text-center">Số SV đã đăng ký</th>
                             <th class="col-actions">Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="pc, st : ${phanCongs}">
+                        <tr th:each="pc, st : ${phanCongs}"
+                            th:with="khoa=${pc.giangVien.maGV + ':' + pc.monHoc.maMH}, l=${lich.get(khoa)}">
                             <td class="col-stt" th:text="${st.count}">1</td>
                             <td class="ma" th:text="${pc.monHoc.maMH}"></td>
                             <td th:text="${pc.monHoc.tenMH}"></td>
@@ -119,9 +119,23 @@
                                 <span th:text="${pc.giangVien.hoTen}"></span>
                                 <div class="small text-muted" th:text="${pc.giangVien.maGV}"></div>
                             </td>
-                            <td class="text-center" th:text="${soSinhVien[pc.monHoc.maMH]} ?: 0"></td>
+                            <td class="small">
+                                <th:block th:if="${l != null}">
+                                    <span th:text="${l.moTa}"></span>
+                                    <span th:if="${l.chinhThuc}" class="badge badge-soft-success ms-1">Chính thức</span>
+                                    <span th:unless="${l.chinhThuc}" class="badge badge-soft-warning ms-1">Nháp</span>
+                                </th:block>
+                                <a th:if="${l == null}" th:href="@{/admin/xep-lich(hocKy=${hocKy})}" class="text-muted">Chưa xếp lịch</a>
+                            </td>
+                            <td class="text-center" th:text="${soSinhVien.get(khoa)} ?: 0"></td>
                             <td class="col-actions">
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa phân công"
+                                <span th:if="${l != null and l.chinhThuc}" class="d-inline-block" tabindex="0" data-tooltip
+                                      title="Không thể xóa: phân công đã có lịch học chính thức">
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-icon" disabled>
+                                        <i class="bi bi-trash"></i></button>
+                                </span>
+                                <button th:unless="${l != null and l.chinhThuc}"
+                                        type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa phân công"
                                         data-tooltip
                                         th:data-confirm-action="@{/admin/phan-cong/xoa}"
                                         data-confirm-message="Bạn có chắc muốn xóa phân công"

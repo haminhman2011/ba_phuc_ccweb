@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Quản lý học kỳ</title>
+</head>
+<body>
+<th:block layout:fragment="page-title">Quản lý học kỳ</th:block>
+<th:block layout:fragment="breadcrumb">
+    <li class="breadcrumb-item">Quản lý</li>
+    <li class="breadcrumb-item active" aria-current="page">Học kỳ</li>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="card table-card">
+        <div class="card-body border-bottom">
+            <div class="toolbar">
+                <div class="text-muted small">
+                    Học kỳ hiện tại được tính theo ngày hôm nay: học kỳ đang diễn ra, hoặc học kỳ sắp tới khi đang nghỉ
+                    giữa hai học kỳ. Tuần 1 bắt đầu từ ngày bắt đầu học kỳ (thứ 2).
+                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hocKyModal"
+                        data-mode="add"><i class="bi bi-plus-lg me-1"></i>Thêm mới</button>
+            </div>
+        </div>
+
+        <th:block th:if="${#lists.isEmpty(hocKys)}">
+            <div th:replace="~{fragments/common :: empty('Chưa có học kỳ nào', null, '#hocKyModal')}"></div>
+        </th:block>
+
+        <div th:unless="${#lists.isEmpty(hocKys)}" class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th>Học kỳ</th>
+                    <th>Ngày bắt đầu</th>
+                    <th>Ngày kết thúc</th>
+                    <th class="text-center">Số tuần</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Số phân công</th>
+                    <th class="col-actions">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r, st : ${hocKys}" th:with="hk=${r.hocKy}">
+                    <td class="col-stt" th:text="${st.count}">1</td>
+                    <td class="ma" th:text="${hk.maHK}">HK1-2026</td>
+                    <td th:text="${#temporals.format(hk.ngayBatDau, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${#temporals.format(hk.ngayKetThuc, 'dd/MM/yyyy')}"></td>
+                    <td class="text-center" th:text="${hk.soTuan}">18</td>
+                    <td>
+                        <span th:if="${r.trangThai == 'HIEN_TAI'}" class="badge badge-soft-success">Hiện tại</span>
+                        <span th:if="${r.trangThai == 'SAP_TOI'}" class="badge badge-soft-primary">Sắp tới</span>
+                        <span th:if="${r.trangThai == 'DA_QUA'}" class="badge badge-soft-secondary">Đã qua</span>
+                    </td>
+                    <td class="text-center">
+                        <a th:href="@{/admin/phan-cong(hocKy=${hk.maHK})}" th:text="${r.soPhanCong}">0</a>
+                    </td>
+                    <td class="col-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-icon" title="Sửa học kỳ"
+                                data-tooltip data-bs-toggle="modal" data-bs-target="#hocKyModal" data-mode="edit"
+                                th:data-ma-h-k="${hk.maHK}" th:data-ngay-bat-dau="${hk.ngayBatDau}"
+                                th:data-ngay-ket-thuc="${hk.ngayKetThuc}">
+                            <i class="bi bi-pencil"></i></button>
+                        <span th:if="${r.soPhanCong > 0}" class="d-inline-block" tabindex="0" data-tooltip
+                              title="Không thể xóa: học kỳ đã có phân công giảng dạy">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-icon" disabled>
+                                <i class="bi bi-trash"></i></button>
+                        </span>
+                        <button th:unless="${r.soPhanCong > 0}"
+                                type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Xóa học kỳ"
+                                data-tooltip
+                                th:data-confirm-action="@{/admin/hoc-ky/{ma}/xoa(ma=${hk.maHK})}"
+                                data-confirm-message="Bạn có chắc muốn xóa học kỳ"
+                                th:data-confirm-target="${hk.maHK}">
+                            <i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal thêm/sửa học kỳ -->
+    <div class="modal fade" id="hocKyModal" tabindex="-1" aria-labelledby="hocKyModalTitle" aria-hidden="true"
+         data-form-modal data-title-add="Thêm học kỳ" data-title-edit="Sửa học kỳ"
+         th:data-open-on-load="${openModal != null}">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/admin/hoc-ky/luu}" th:object="${form}" method="post" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="hocKyModalTitle" th:text="*{editMode} ? 'Sửa học kỳ' : 'Thêm học kỳ'">Thêm học kỳ</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <th:block th:replace="~{fragments/alerts :: modal-error}"></th:block>
+                        <input type="hidden" th:field="*{editMode}">
+                        <div class="mb-3">
+                            <label for="maHK" class="form-label required">Mã học kỳ</label>
+                            <input type="text" th:field="*{maHK}" class="form-control" th:errorclass="is-invalid"
+                                   maxlength="10" placeholder="VD: HK2-2026" data-pk data-uppercase
+                                   th:readonly="*{editMode}">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('maHK')}" th:errors="*{maHK}"></div>
+                            <div class="form-text">HK1, HK2 hoặc HK3 (hè) và năm bắt đầu năm học, ví dụ HK2-2026 là học kỳ 2
+                                năm học 2026–2027.</div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label for="ngayBatDau" class="form-label required">Ngày bắt đầu</label>
+                                <input type="date" th:field="*{ngayBatDau}" class="form-control" th:errorclass="is-invalid">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('ngayBatDau')}" th:errors="*{ngayBatDau}"></div>
+                                <div class="form-text">Phải là thứ 2 (đầu tuần 1).</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="ngayKetThuc" class="form-label required">Ngày kết thúc</label>
+                                <input type="date" th:field="*{ngayKetThuc}" class="form-control" th:errorclass="is-invalid">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('ngayKetThuc')}" th:errors="*{ngayKetThuc}"></div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">Mỗi môn học 15 tuần (15 tiết mỗi tín chỉ, mỗi tuần một buổi), nên học kỳ
+                            chính nên dài ít nhất 15 tuần.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

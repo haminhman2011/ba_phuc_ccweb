@@ -19,7 +19,7 @@ import com.dangkymonhoc.service.HocKyService;
 
 import lombok.RequiredArgsConstructor;
 
-/** MH07 Đăng ký môn học (UC03, UC04, UC05, UC06). */
+/** MH07 Đăng ký môn học (UC03, UC04, UC05, UC06, QĐ10). */
 @Controller
 @RequestMapping("/sv/dang-ky")
 @RequiredArgsConstructor
@@ -34,18 +34,23 @@ public class DangKyController {
         String hk = hocKyService.chuanHoa(hocKy);
         List<DangKy> daDangKy = dangKyService.daDangKy(user.getMaSV(), hk);
         model.addAttribute("hocKy", hk);
+        // Học kỳ cũ chỉ được xem, không hiện nút đăng ký / hủy
+        model.addAttribute("choPhepThaoTac", hk.equals(hocKyService.hienTai()));
         model.addAttribute("dsHocKy", hocKyService.tatCa(dangKyService.hocKyDaDangKy(user.getMaSV()).toArray(String[]::new)));
         model.addAttribute("daDangKy", daDangKy);
         model.addAttribute("tongTinChi", daDangKy.stream().mapToInt(dk -> dk.getMonHoc().getSoTinChi()).sum());
         model.addAttribute("monMo", dangKyService.monDuocMo(hk, daDangKy));
+        model.addAttribute("lichCongBo", dangKyService.lichDaCongBo(hk));
+        model.addAttribute("lichDaDangKy", dangKyService.lichDaDangKy(user.getMaSV(), hk));
         return "sv/dang-ky";
     }
 
     @PostMapping
-    public String dangKy(@RequestParam String maMH, @RequestParam String hocKy,
+    public String dangKy(@RequestParam String maMH, @RequestParam(required = false) String maGV,
+                         @RequestParam String hocKy,
                          @AuthenticationPrincipal CustomUserDetails user, RedirectAttributes ra) {
         try {
-            DangKy dk = dangKyService.dangKy(user.getMaSV(), maMH, hocKy);
+            DangKy dk = dangKyService.dangKy(user.getMaSV(), maMH, maGV, hocKy);
             ra.addFlashAttribute("successMessage", "Đăng ký môn " + dk.getMonHoc().getTenMH() + " thành công.");
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());

@@ -24,8 +24,12 @@ public interface PhanCongRepository extends JpaRepository<PhanCong, PhanCongId> 
             order by m.maMH""")
     List<PhanCong> findByGiangVienAndHocKy(@Param("maGV") String maGV, @Param("hocKy") String hocKy);
 
-    @Query("select distinct p.id.hocKy from PhanCong p")
-    List<String> findAllHocKy();
+    @Query("select count(p) from PhanCong p where p.id.hocKy = :hocKy")
+    long countByHocKy(@Param("hocKy") String hocKy);
+
+    /** Mỗi phần tử: [học kỳ, số phân công]. */
+    @Query("select p.id.hocKy, count(p) from PhanCong p group by p.id.hocKy")
+    List<Object[]> countTheoHocKy();
 
     @Query("select distinct p.id.hocKy from PhanCong p where p.id.maGV = :maGV")
     List<String> findHocKyByGiangVien(@Param("maGV") String maGV);
